@@ -1,44 +1,55 @@
+# File path: backend/app/auth/jwt_handler.py
+
+# Authentication Layer:
+# - Generates JWT access tokens
+# - Validates authentication tokens
+# - Handles token expiration
+# - Provides request authentication
+
+# Start file:
+
 from datetime import datetime, timedelta, timezone
 import jwt
 from jwt.exceptions import InvalidTokenError, ExpiredSignatureError
 from fastapi import HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-# Cargar variables de entorno del PMS
-load_dotenv("SB314.env")
 
-# Configuración de JWT
-SECRET_KEY = os.getenv("JWT_SECRET", "SECRET_KEY_SB314")
+# Load environment variables for authentication configuration
+load_dotenv(find_dotenv("SB314.env"))
+
+SECRET_KEY = os.getenv("SECRET_KEY_JWT", "")
+
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY_JWT is not configured")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 horas para mayor comodidad en desarrollo
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
-# Instancia para extraer el token automáticamente en FastAPI
+
+# HTTP Bearer security scheme for Swagger and frontend authentication
 security = HTTPBearer()
 
+
+# Create JWT access token with expiration time
 def create_access_token(data: dict) -> str:
-    """
-    Generate a Official JWT Token with expiration time
-    """
     to_encode = data.copy()
-    
-    # Usamos timezone.utc porque datetime.utcnow() está deprecado en versiones nuevas de Python
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    
-    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return token
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+
+# Validate and decode JWT token from request credentials
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-    """
-    Verify received JWT token.
-    """
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="El token ha expirado")
+        raise HTTPException(status_code=401, detail="Token has expired")
     except InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Token inválido")
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+
+# End file:
