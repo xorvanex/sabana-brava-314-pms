@@ -1,0 +1,30 @@
+# File path: backend/app/auth/dependencies.py
+
+# Authorization Layer:
+# - Handles role-based access control
+# - Validates user permissions
+# - Restricts protected endpoints
+# - Uses JWT payload dependencies
+
+# Start file:
+
+from fastapi import Depends, HTTPException, status
+from app.auth.jwt_handler import verify_token
+
+
+# Authorization dependency: allows only ADMIN or DUENA roles
+def require_admin_or_duena(payload: dict = Depends(verify_token)) -> dict:
+    # Extract role from JWT payload
+    rol = payload.get("rol")
+
+    # Validate role permissions
+    if rol not in ["DUEÑA", "ADMINISTRADOR"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to perform this action."
+        )
+
+    return payload
+
+
+# End file:
