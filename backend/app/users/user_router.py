@@ -107,7 +107,7 @@ def change_password(
 
 # Toggle user active/inactive status
 @router.patch("/{user_id}/status")
-def toggle_status(
+def toggle_user_status(
     user_id: UUID,
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_duena)
