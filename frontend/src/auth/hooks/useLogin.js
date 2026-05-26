@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/auth/services/auth.service";
-import { ROUTES } from "@/shared/constants/routes";
+import { getRedirectByRole } from "@/shared/lib/roleRedirect";
 
 export function useLogin() {
   const router = useRouter();
@@ -21,7 +21,9 @@ export function useLogin() {
       const data = await login(email.trim(), password);
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("usuario", JSON.stringify(data.usuario));
-      router.push(ROUTES.INICIO);
+
+      const redirectTo = getRedirectByRole(data.usuario?.rol);
+      router.push(redirectTo);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Error al iniciar sesión"
