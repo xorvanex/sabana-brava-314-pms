@@ -6,10 +6,8 @@ import Button from "@/shared/components/ui/button/Button";
 import Input from "@/shared/components/ui/input/Input";
 import Spinner from "@/shared/components/ui/spinner/Spinner";
 
-const BACKGROUND_IMAGE =
-  "https://www.sabanabrava.com/wp-content/uploads/2025/11/Hotel-en-campo-rubiales.png";
-const LOGO_IMAGE =
-  "https://www.sabanabrava.com/wp-content/uploads/2025/11/Logo_sabanita-removebg-preview.png";
+const BACKGROUND_IMAGE = "/assets/images/fachada-hotel.png";
+const LOGO_IMAGE = "/assets/images/logo-hotel.png";
 
 export default function LoginForm() {
   const {
