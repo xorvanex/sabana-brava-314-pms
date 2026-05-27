@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/auth/services/auth.service";
-import { getRedirectByRole } from "@/shared/lib/roleRedirect";
+import { getRedirectByRole } from "@/shared/API/roleRedirect";
 import { ROUTES } from "@/shared/constants/routes";
 
 export function useLogin() {

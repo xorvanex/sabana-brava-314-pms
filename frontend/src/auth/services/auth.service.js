@@ -1,4 +1,4 @@
-import { API_URL } from "@/shared/lib/api";
+import { API_URL } from "@/shared/API/api";
 
 export async function login(email, password) {
   const body = new FormData();
