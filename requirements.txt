@@ -32,6 +32,7 @@ mmh3==5.2.1
 multidict==6.7.1
 packaging==26.2
 passlib==1.7.4
+pillow==12.2.0
 propcache==0.5.2
 psycopg2-binary==2.9.12
 pycparser==3.0
@@ -46,6 +47,7 @@ pyroaring==1.1.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 python-multipart==0.0.29
+reportlab==4.5.1
 requests==2.34.2
 rich==14.3.4
 six==1.17.0
