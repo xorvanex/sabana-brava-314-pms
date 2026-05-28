@@ -18,9 +18,9 @@ from app.database.base import Base
 
 # User role enumeration (strict DB constraint values)
 class UserRoleEnum(str, enum.Enum):
-    OWNER = "PROPIETARIO"
-    ADMINISTRATOR = "ADMINISTRADOR"
-    RECEPCIONIST = "RECEPCIONISTA"
+    PROPIETARIO = "PROPIETARIO"
+    ADMINISTRADOR = "ADMINISTRADOR"
+    RECEPCIONISTA = "RECEPCIONISTA"
 
 
 # User ORM model definition

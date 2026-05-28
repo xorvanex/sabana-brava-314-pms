@@ -16,9 +16,9 @@ from enum import Enum
 
 # Role schema enumeration (API layer validation)
 class UserRoleEnum(str, Enum):
-    OWNER = "PROPIETARIO"
-    ADMINISTRATOR = "ADMINISTRADOR"
-    RECEPCIONIST = "RECEPCIONISTA"
+    PROPIETARIO = "PROPIETARIO"
+    ADMINISTRADOR = "ADMINISTRADOR"
+    RECEPCIONISTA = "RECEPCIONISTA"
 
 
 # Schema for creating a receptionist user
