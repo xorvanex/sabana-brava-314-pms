@@ -18,7 +18,7 @@ from fastapi import (
 
 from sqlalchemy.orm import Session
 from app.database.sessions import get_db
-from app.auth.dependencies import require_admin_or_duena
+from app.auth.dependencies import require_admin_or_owner
 from . import company_scheme, company_service
 
 
@@ -43,7 +43,7 @@ def create_company(
     correo: str = Form(None),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     # Build validated Pydantic schema from form data
@@ -68,7 +68,7 @@ def create_company(
 )
 def get_all_companies(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return company_service.get_all_companies(db)
@@ -83,7 +83,7 @@ def get_company_by_id(
     company_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return company_service.get_company_by_id(
@@ -108,7 +108,7 @@ def update_company(
     activo: bool = Form(None),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     # Build validated update schema from form data
@@ -137,7 +137,7 @@ def toggle_company_status(
     company_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return company_service.toggle_company_status(

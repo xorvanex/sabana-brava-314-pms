@@ -15,7 +15,7 @@ from uuid import UUID
 
 from app.database.sessions import get_db
 from app.auth.jwt_handler import verify_token
-from app.auth.dependencies import require_admin_or_duena
+from app.auth.dependencies import require_admin_or_owner
 
 from . import user_scheme, user_service, user_repository
 
@@ -35,7 +35,7 @@ def login(
     return user_service.authenticate_user(db, username, password)
 
 
-# Register receptionist (admin/duena only)
+# Register receptionist (admin/owner only)
 @router.post(
     "/receptionist",
     response_model=user_scheme.UserResponse,
@@ -47,7 +47,7 @@ def register_receptionist(
     password: str = Form(..., min_length=6),
     telefono: str = Form(None),
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
     # Build validated Pydantic schema from form data
     user_in = user_scheme.ReceptionistCreate(
@@ -60,11 +60,11 @@ def register_receptionist(
     return user_service.create_receptionist(db, user_in)
 
 
-# Get all receptionists (admin/duena only)
+# Get all receptionists (admin/owner only)
 @router.get("/receptionists", response_model=List[user_scheme.UserResponse])
 def get_receptionists(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
     return user_service.get_all_receptionists(db)
 
@@ -110,16 +110,16 @@ def change_password(
 def toggle_user_status(
     user_id: UUID,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
     return user_service.toggle_user_status(db, user_id)
 
 
-# Retrieve all users (admin/duena only)
+# Retrieve all users (admin/owner only)
 @router.get("/", response_model=List[user_scheme.UserResponse])
 def get_all_users(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
     return user_repository.get_all_users(db)
 

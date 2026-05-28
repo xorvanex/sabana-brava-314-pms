@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.database.sessions import get_db
 
-from app.auth.dependencies import require_admin_or_duena
+from app.auth.dependencies import require_admin_or_owner
 
 from . import contract_scheme, contract_service
 
@@ -54,7 +54,7 @@ def create_contract(
     terminos: str = Form(...),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     # Build validated Pydantic schema from form data
@@ -80,7 +80,7 @@ def create_contract(
 )
 def get_all_contracts(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return contract_service.get_all_contracts(db)
@@ -95,7 +95,7 @@ def get_contract_by_id(
     contract_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return contract_service.get_contract_by_id(
@@ -123,7 +123,7 @@ def update_contract(
     activo: bool = Form(None),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     # Build validated update schema from form data
@@ -152,7 +152,7 @@ def toggle_contract_status(
     contract_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return contract_service.toggle_contract_status(
@@ -169,7 +169,7 @@ def generate_contract_pdf(
     contract_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_duena)
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return contract_service.generate_contract_pdf(
