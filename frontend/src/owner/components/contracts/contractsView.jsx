@@ -5,7 +5,7 @@ export default function ContractsView() {
         Gestionar contrato
       </h1>
       <p className="text-sm text-gray-600">
-        Aquí podrás crear, editar y consultar contratos empresariales.
+        
       </p>
 
       <div className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
