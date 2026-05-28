@@ -21,7 +21,7 @@ export default function OwnerDashboard() {
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold text-emerald-900">
-        Panel principal - Owner
+        Panel principal - Propietario
       </h1>
       <p className="text-sm text-gray-600">
         Vista general del estado administrativo.

@@ -5,7 +5,7 @@ export default function BillingView() {
         Consultar facturación
       </h1>
       <p className="text-sm text-gray-600">
-        Aquí podrás listar, filtrar y revisar facturas electrónicas.
+       
       </p>
 
       <div className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
