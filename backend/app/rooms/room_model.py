@@ -15,11 +15,11 @@ from app.database.base import Base
 
 # Room state enumeration
 class RoomStateEnum(str, enum.Enum):
-    AVAILABLE = "DISPONIBLE"
-    OCCUPIED = "OCUPADA"
-    LOCKED = "BLOQUEADA"
-    IN_MAINTENANCE = "MANTENIMIENTO"
-    OUT_SERVICE = "FUERA DE SERVICIO"
+    AVAILABLE = "AVAILABLE"
+    OCCUPIED = "OCCUPIED"
+    BLOCKED = "BLOCKED"
+    MAINTENANCE = "MAINTENANCE"
+    OUT_OF_SERVICE = "OUT_OF_SERVICE"
 
 # Rooms ORM model definition
 class Room(Base):

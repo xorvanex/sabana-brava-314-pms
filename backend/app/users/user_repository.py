@@ -19,8 +19,8 @@ def get_user_by_id(db: Session, user_id: UUID) -> User | None:
 
 
 # Retrieve users filtered by role
-def get_users_by_role(db: Session, rol: str):
-    return db.query(User).filter(User.rol == rol).all()
+def get_users_by_role(db: Session, role: str):
+    return db.query(User).filter(User.role == role).all()
 
 
 # Retrieve all users

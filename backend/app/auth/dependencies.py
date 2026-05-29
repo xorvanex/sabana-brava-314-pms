@@ -15,10 +15,10 @@ from app.auth.jwt_handler import verify_token
 # Authorization dependency: allows only ADMIN or OWNER roles
 def require_admin_or_owner(payload: dict = Depends(verify_token)) -> dict:
     # Extract role from JWT payload
-    rol = payload.get("rol")
+    rol = payload.get("role")
 
     # Validate role permissions
-    if rol not in ["PROPIETARIO", "ADMINISTRADOR"]:
+    if rol not in ["OWNER", "ADMINISTRATOR"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to perform this action."

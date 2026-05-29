@@ -13,33 +13,33 @@ from app.database.base import Base
 
 # User role enumeration (strict DB constraint values)
 class UserRoleEnum(str, enum.Enum):
-    PROPIETARIO = "PROPIETARIO"
-    ADMINISTRADOR = "ADMINISTRADOR"
-    RECEPCIONISTA = "RECEPCIONISTA"
+    OWNER = "OWNER"
+    ADMINISTRATOR = "ADMINISTRATOR"
+    RECEPTIONIST = "RECEPTIONIST"
 
 
 # User ORM model definition
 class User(Base):
-    __tablename__ = "usuarios"
+    __tablename__ = "users"
 
     # Primary key UUID
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
 
-    nombre = Column(String(100), nullable=False)
+    name = Column(String(100), nullable=False)
 
     # Unique email identifier
     email = Column(String(150), unique=True, nullable=False, index=True)
-    telefono = Column(String(20), nullable=True)
+    phone = Column(String(20), nullable=True)
 
     # Role constrained by Enum type
-    rol = Column(Enum(UserRoleEnum, name="user_rol_enum", create_type=False), nullable=False)
+    role = Column(Enum(UserRoleEnum, name="user_rol_enum", create_type=False), nullable=False)
 
     # Timestamp fields
-    creado_en = Column(DateTime, default=datetime.utcnow, nullable=True)
-    actualizado_en = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=True)
 
     # Hashed password storage
-    password = Column(String(255), nullable=False)
+    password_hash = Column(String(255), nullable=False)
 
     # Account status flag
     is_active = Column(Boolean, default=True)

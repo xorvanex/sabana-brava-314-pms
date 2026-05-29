@@ -37,19 +37,19 @@ def login(
     status_code=status.HTTP_201_CREATED
 )
 def register_receptionist(
-    nombre: str = Form(...),
+    name: str = Form(...),
     email: str = Form(...),
-    password: str = Form(..., min_length=6),
-    telefono: str = Form(None),
+    password_hash: str = Form(..., min_length=6),
+    phone: str = Form(None),
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
     # Build validated Pydantic schema from form data
     user_in = user_scheme.ReceptionistCreate(
-        nombre=nombre,
+        name=name,
         email=email,
-        password=password,
-        telefono=telefono
+        password_hash=password_hash,
+        phone=phone
     )
 
     return user_service.create_receptionist(db, user_in)

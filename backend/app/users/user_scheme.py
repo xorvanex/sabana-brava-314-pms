@@ -11,32 +11,32 @@ from enum import Enum
 
 # Role schema enumeration (API layer validation)
 class UserRoleEnum(str, Enum):
-    PROPIETARIO = "PROPIETARIO"
-    ADMINISTRADOR = "ADMINISTRADOR"
-    RECEPCIONISTA = "RECEPCIONISTA"
+    OWNER = "OWNER"
+    ADMINISTRATOR = "ADMINISTRATOR"
+    RECEPTIONIST = "RECEPTIONIST"
 
 
 # Schema for creating a receptionist user
 class ReceptionistCreate(BaseModel):
-    nombre: str
+    name: str
     email: EmailStr
-    telefono: Optional[str] = None
-    password: str = Field(..., min_length=6, description="Minimum 6 characters")
+    phone: Optional[str] = None
+    password_hash: str = Field(..., min_length=6, description="Minimum 6 characters")
 
 
 # Schema for user login request
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password_hash: str
 
 
 # Schema for user API responses
 class UserResponse(BaseModel):
     id: UUID
-    nombre: str
+    name: str
     email: EmailStr
-    telefono: Optional[str]
-    rol: UserRoleEnum
+    phone: Optional[str]
+    role: UserRoleEnum
     is_active: bool
 
     class Config:

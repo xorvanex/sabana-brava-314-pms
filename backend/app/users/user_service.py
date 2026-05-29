@@ -21,15 +21,15 @@ def create_receptionist(db: Session, user_in: user_scheme.ReceptionistCreate):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     user_data = user_in.model_dump()
-    user_data["password"] = hash_password(user_data["password"])
-    user_data["rol"] = user_scheme.UserRoleEnum.RECEPCIONISTA
+    user_data["password_hash"] = hash_password(user_data["password_hash"])
+    user_data["role"] = user_scheme.UserRoleEnum.RECEPTIONIST
 
     return user_repository.create_user(db, user_data)
 
 
 # Retrieve all receptionist users
 def get_all_receptionists(db: Session):
-    return user_repository.get_users_by_role(db, user_scheme.UserRoleEnum.RECEPCIONISTA.value)
+    return user_repository.get_users_by_role(db, user_scheme.UserRoleEnum.RECEPTIONIST.value)
 
 
 # Get authenticated user profile by ID
@@ -43,7 +43,7 @@ def get_my_profile(db: Session, user_id: str):
 # Update current user password after verification
 def update_my_password(db: Session, user_id: str, old_password: str, new_password: str):
     user = user_repository.get_user_by_id(db, UUID(user_id))  
-    if not user or not verify_password(old_password, str(user.password)):  
+    if not user or not verify_password(old_password, str(user.password_hash)):  
         raise HTTPException(status_code=400, detail="Incorrect current password")
 
     user_data = {"password": hash_password(new_password)}
@@ -64,7 +64,7 @@ def toggle_user_status(db: Session, user_id: UUID):
 def authenticate_user(db: Session, email: str, password: str):
     user = user_repository.get_user_by_email(db, email)
 
-    if not user or not verify_password(password, str(user.password)):  
+    if not user or not verify_password(password, str(user.password_hash)):  
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
@@ -79,15 +79,15 @@ def authenticate_user(db: Session, email: str, password: str):
     token_payload = {
         "sub": str(user.id),
         "email": user.email,
-        "rol": user.rol.value
+        "role": user.role.value
     }
 
     return {
         "access_token": create_access_token(token_payload),
         "token_type": "bearer",
-        "usuario": {
-            "nombre": user.nombre,
-            "rol": user.rol.value
+        "user": {
+            "name": user.name,
+            "role": user.role.value
         }
     }
 
