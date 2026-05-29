@@ -1,24 +1,12 @@
 # File path: backend/app/contracts/contract_service.py
 
 
-# Start file:
 from datetime import date, datetime
 from typing import cast
-
 from uuid import UUID
-from io import BytesIO
 
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from starlette.responses import StreamingResponse
-
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Paragraph,
-    Spacer
-)
-
-from reportlab.lib.styles import getSampleStyleSheet
 
 from . import (
     contract_repository,
@@ -26,20 +14,21 @@ from . import (
 )
 
 from app.companies import company_repository
+from .contract_pdf_generator import generate_contract_pdf as create_contract_pdf
+
 
 def generate_contract_number(db: Session) -> str:
     current_year = datetime.now().year
-    
     total_contracts = len(contract_repository.get_all_contracts(db)) + 1
     
     return f"CTR-{current_year}-{total_contracts:05d}"
 
-# Create new contract
+
 def create_contract(
     db: Session,
     contract_in: contract_scheme.ContractCreate
-):
-    # Validate company existence
+) -> dict:
+    # Validar existencia de la empresa
     company = company_repository.get_company_by_id(
         db,
         contract_in.company_id
@@ -51,21 +40,21 @@ def create_contract(
             detail="Company not found"
         )
     
-    # Prevent contracts for inactive companies
+    # Validar que la empresa esté activa
     if not bool(company.is_active):
         raise HTTPException(
             status_code=400,
             detail="Company is inactive"
         )
     
-    # Validate contract dates
+    # Validar rango de fechas
     if contract_in.end_date <= contract_in.start_date:
         raise HTTPException(
             status_code=400,
             detail="Contract end date must be greater than start date"
         )
 
-    # Prevent overlapping of periods
+    # Validar que no haya contratos superpuestos
     if contract_repository.check_overlapping_contracts(
         db,
         contract_in.company_id,
@@ -77,24 +66,24 @@ def create_contract(
             detail="Company already has an active contract with overlapping dates"
         )
 
+    # Generar número único de contrato
     contract_number = generate_contract_number(db)
     
+    # Preparar datos para guardar
     contract_data = contract_in.model_dump()
-    
     contract_data["contract_number"] = contract_number
     
+    # Guardar en base de datos
     return contract_repository.create_contract(
         db,
         contract_data
     )
 
 
-# Retrieve contract by ID
 def get_contract_by_id(
     db: Session,
     contract_id: UUID
-):
-
+) -> dict:
     contract = contract_repository.get_contract_by_id(
         db,
         contract_id
@@ -109,18 +98,16 @@ def get_contract_by_id(
     return contract
 
 
-# Retrieve all contracts
-def get_all_contracts(db: Session):
+def get_all_contracts(db: Session) -> list:
     return contract_repository.get_all_contracts(db)
 
 
-# Update contract information
 def update_contract(
     db: Session,
     contract_id: UUID,
     contract_in: contract_scheme.ContractUpdate
-):
-
+) -> dict:
+    # Obtener contrato existente
     contract = contract_repository.get_contract_by_id(
         db,
         contract_id
@@ -132,7 +119,7 @@ def update_contract(
             detail="Contract not found"
         )
 
-    # Resolve final contract dates
+    # Resolver fechas finales (usar nuevas o mantener las existentes)
     new_start_date = cast(
         date,
         contract_in.start_date or contract.start_date
@@ -143,14 +130,14 @@ def update_contract(
         contract_in.end_date or contract.end_date
     )
 
-    # Validate final contract date range
+    # Validar rango de fechas
     if new_end_date <= new_start_date:
         raise HTTPException(
             status_code=400,
             detail="Invalid contract date range"
         )
     
-    # Validate overlap excluding the current contract
+    # Validar que no haya conflictos con otros contratos
     if contract_repository.check_overlapping_contracts(
         db,
         cast(UUID, contract.company_id),
@@ -163,6 +150,7 @@ def update_contract(
             detail="Updated contract dates overlap with existing contract"
         )
     
+    # Preparar datos para actualizar
     update_data = contract_in.model_dump(exclude_unset=True)
 
     return contract_repository.update_contract(
@@ -172,12 +160,10 @@ def update_contract(
     )
 
 
-# Toggle contract active status
 def toggle_contract_status(
     db: Session,
     contract_id: UUID
-):
-
+) -> dict:
     contract = contract_repository.get_contract_by_id(
         db,
         contract_id
@@ -189,6 +175,7 @@ def toggle_contract_status(
             detail="Contract not found"
         )
 
+    # Invertir estado actual
     new_status = not bool(contract.is_active)
 
     return contract_repository.update_contract(
@@ -198,103 +185,25 @@ def toggle_contract_status(
     )
 
 
-def get_company_contracts(db: Session, company_id: UUID):
+def get_company_contracts(
+    db: Session,
+    company_id: UUID
+) -> list:
     return contract_repository.get_company_contracts(db, company_id)
 
 
-# Retrieve active contracts
-def get_active_contracts(db: Session):
+def get_active_contracts(db: Session) -> list:
     return contract_repository.get_active_contracts(db)
 
 
-# Generate contract PDF dynamically in memory
 def generate_contract_pdf(
     db: Session,
     contract_id: UUID
 ):
-
-    contract = contract_repository.get_contract_by_id(
+    return create_contract_pdf(
         db,
-        contract_id
-    )
-
-    if not contract:
-        raise HTTPException(
-            status_code=404,
-            detail="Contract not found"
-        )
-
-    company = contract.company
-
-    # Dynamic legal/business contract content
-    # Generated from persisted relational data
-    contract_text = f"""
-    HOTEL SABANA BRAVA 314
-
-    COMPANY INFORMATION
-
-    Company Name: {company.name}
-    NIT: {company.nit}
-    Address: {company.address}
-    Email: {company.email}
-    Phone: {company.phone}
-
-    CONTRACT INFORMATION
-
-    Contract Number: {contract.contract_number}
-    Start Date: {contract.start_date}
-    End Date: {contract.end_date}
-    Base Tariff: ${contract.base_rate}
-
-    CONTRACT TERMS
-
-    {contract.terms}
-
-    ADDITIONAL DESCRIPTION
-
-    {contract.description or "No additional description provided."}
-    
-    COMPANY SIGNATURE: _______________________
-    .
-    .
-    .
-    .
-    OWNER SIGNATURE: ___________________________
-    """
-
-    # In-memory binary buffer
-    # Prevents physical file persistence on server
-    pdf_buffer = BytesIO()
-
-    # PDF document initialization
-    pdf = SimpleDocTemplate(pdf_buffer)
-
-    styles = getSampleStyleSheet()
-
-    content = []
-
-    content.append(
-        Paragraph(contract_text, styles["BodyText"])
-    )
-
-    content.append(
-        Spacer(1, 12)
-    )
-
-    # Build PDF document entirely in memory
-    pdf.build(content)
-
-    pdf_buffer.seek(0)
-
-    # Streaming response:
-    # Returns generated PDF directly to frontend
-    return StreamingResponse(
-        pdf_buffer,
-        media_type="application/pdf",
-        headers={
-            "Content-Disposition":
-            f"attachment; filename=contract_{contract.id}.pdf"
-        }
+        contract_id,
+        contract_repository
     )
 
 
