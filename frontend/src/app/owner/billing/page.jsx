@@ -1,4 +1,4 @@
-import BillingView from "@/owner/components/billing/billingView";
+import BillingView from "@/shared/globalComponents/checkbilling/billingView";
 
 export default function BillingPage() {
   return <BillingView />;

@@ -1,6 +1,6 @@
 "use client";
 
-import AppShell from "@/shared/components/layout/AppShell";
+import AppShell from "@/shared/globalComponents/layout/AppShell";
 import { useOwner } from "@/owner/hooks/useOwner";
 import { ROUTES } from "@/shared/constants/routes";
 

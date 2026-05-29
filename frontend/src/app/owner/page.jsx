@@ -1,5 +1,5 @@
-import OwnerDashboard from "@/owner/components/dashboard/ownerDashboard";
+import GlobalDashboard from "@/shared/globalComponents/dashboard/globalDashboard";
 
 export default function OwnerPage() {
-  return <OwnerDashboard />;
+  return <GlobalDashboard />;
 }
