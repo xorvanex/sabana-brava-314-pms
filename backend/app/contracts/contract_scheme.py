@@ -15,31 +15,31 @@ from app.companies.company_scheme import CompanyBasicResponse
 # Schema for contract creation
 class ContractCreate(BaseModel):
 
-    empresa_id: UUID
+    company_id: UUID
 
-    fecha_inicio: date
-    fecha_fin: date
+    start_date: date
+    end_date: date
 
-    tarifa_base: Decimal = Field(..., gt=0, max_digits=12, decimal_places=2)
+    base_rate: Decimal = Field(..., gt=0, max_digits=12, decimal_places=2)
 
-    descripcion: Optional[str] = Field(None, max_length=5000)
+    description: Optional[str] = Field(None, max_length=5000)
 
     # Contract legal/business agreements
-    terminos: str = Field(..., min_length=10, max_length=5000)
+    terms: str = Field(..., min_length=10, max_length=5000)
 
 
 # Schema for contract updates
 class ContractUpdate(BaseModel):
 
-    fecha_inicio: Optional[date] = None
-    fecha_fin: Optional[date] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
 
-    tarifa_base: Optional[Decimal] = Field(None, gt=0, max_digits=12, decimal_places=2)
+    base_rate: Optional[Decimal] = Field(None, gt=0, max_digits=12, decimal_places=2)
 
-    descripcion: Optional[str] = Field(None, max_length=5000)
-    terminos: Optional[str] = Field(None, min_length=10, max_length=5000)
+    description: Optional[str] = Field(None, max_length=5000)
+    terms: Optional[str] = Field(None, min_length=10, max_length=5000)
 
-    activo: Optional[bool] = None
+    is_active: Optional[bool] = None
 
 
 # Schema for contract API responses
@@ -47,19 +47,21 @@ class ContractResponse(BaseModel):
 
     id: UUID
     
+    contract_number: str
+
     # Nested company information
     # Improves frontend readability and UX
     company: CompanyBasicResponse
 
-    fecha_inicio: date
-    fecha_fin: date
+    start_date: date
+    end_date: date
 
-    tarifa_base: Decimal
+    base_rate: Decimal
 
-    descripcion: Optional[str]
-    terminos: str
+    description: Optional[str]
+    terms: str
 
-    activo: bool
+    is_active: bool
 
     class Config:
         from_attributes = True

@@ -8,6 +8,7 @@ from datetime import date
 from uuid import UUID
 
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import desc
 
 from .contract_model import Contract
 
@@ -41,24 +42,24 @@ def get_all_contracts(db: Session):
 # Retrieve contract by company
 def get_company_active_contracts(
     db: Session,
-    empresa_id: UUID
+    company_id: UUID
 ):
 
     return (
         db.query(Contract)
         .filter(
-            Contract.empresa_id == empresa_id,
-            Contract.activo == True
+            Contract.company_id == company_id,
+            Contract.is_active == True
         )
         .all()
     )
 
 
 # Retrieve contracts by company
-def get_company_contracts(db: Session, empresa_id: UUID):
+def get_company_contracts(db: Session, company_id: UUID):
     return (
         db.query(Contract)
-        .filter(Contract.empresa_id == empresa_id)
+        .filter(Contract.company_id == company_id)
         .options(joinedload(Contract.company))
         .all()
     )
@@ -68,7 +69,7 @@ def get_company_contracts(db: Session, empresa_id: UUID):
 def get_active_contracts(db: Session):
     return (
         db.query(Contract)
-        .filter(Contract.activo == True)
+        .filter(Contract.is_active == True)
         .options(joinedload(Contract.company))
         .all()
     )
@@ -111,11 +112,21 @@ def update_contract(
     return contract
 
 
+# Retrieve the last contract
+def get_last_contract(db: Session):
+
+    return (
+        db.query(Contract)
+        .order_by(desc(Contract.created_at))
+        .first()
+    )
+
+
 def check_overlapping_contracts(
     db: Session,
-    empresa_id: UUID,
-    fecha_inicio: date,
-    fecha_fin: date,
+    company_id: UUID,
+    start_date: date,
+    end_date: date,
     exclude_contract_id: UUID | None = None
 ) -> bool:
     """
@@ -123,22 +134,22 @@ def check_overlapping_contracts(
     
     Args:
         db: BD Session
-        empresa_id: Company ID
-        fecha_inicio: Start date of the new contract
-        fecha_fin: End date of the new contract
+        company_id: Company ID
+        start_date: Start date of the new contract
+        end_date: End date of the new contract
         exclude_contract_id: Contract ID to exclude (for updates)
         
     Returns:
         True if there is overlap, False if there is no
     """
     query = db.query(Contract).filter(
-        Contract.empresa_id == empresa_id,
-        Contract.activo == True,
+        Contract.company_id == company_id,
+        Contract.is_active == True,
         # Overlap logic:
         # Two periods overlap if:
-        # fecha_inicio_new < fecha_fin_existing AND fecha_fin_new > fecha_inicio_existing
-        Contract.fecha_inicio < fecha_fin,
-        Contract.fecha_fin > fecha_inicio
+        # start_date_new < end_date_existing AND end_date_new > start_date_existing
+        Contract.start_date < end_date,
+        Contract.end_date > start_date
     )
     
     if exclude_contract_id:

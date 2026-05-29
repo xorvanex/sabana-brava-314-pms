@@ -38,17 +38,17 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED
 )
 def create_contract(
-    empresa_id: UUID = Form(...),
+    company_id: UUID = Form(...),
 
-    fecha_inicio: date = Form(...),
-    fecha_fin: date = Form(...),
+    start_date: date = Form(...),
+    end_date: date = Form(...),
 
-    tarifa_base: Decimal = Form(...),
+    base_rate: Decimal = Form(...),
 
-    descripcion: str = Form(None),
+    description: str = Form(None),
 
     # Contract negotiated agreements
-    terminos: str = Form(...),
+    terms: str = Form(...),
 
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
@@ -56,12 +56,12 @@ def create_contract(
 
     # Build validated Pydantic schema from form data
     contract_in = contract_scheme.ContractCreate(
-        empresa_id=empresa_id,
-        fecha_inicio=fecha_inicio,
-        fecha_fin=fecha_fin,
-        tarifa_base=tarifa_base,
-        descripcion=descripcion,
-        terminos=terminos
+        company_id=company_id,
+        start_date=start_date,
+        end_date=end_date,
+        base_rate=base_rate,
+        description=description,
+        terms=terms
     )
 
     return contract_service.create_contract(
@@ -83,7 +83,32 @@ def get_all_contracts(
     return contract_service.get_all_contracts(db)
 
 
-# Retrieve contract by company
+# Retrieve active contracts
+@router.get(
+    "/active",
+    response_model=List[contract_scheme.ContractResponse]
+)
+def get_active_contracts(
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return contract_service.get_active_contracts(db)
+
+
+# Retrieve active contracts for companies
+@router.get(
+    "/company/{company_id}",
+    response_model=List[contract_scheme.ContractResponse]
+)
+def get_company_contracts(
+    company_id: UUID,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return contract_service.get_company_contracts(db, company_id)
+
+
+# Retrieve contract by ID
 @router.get(
     "/{contract_id}",
     response_model=contract_scheme.ContractResponse
@@ -101,31 +126,6 @@ def get_contract_by_id(
     )
 
 
-# Retrieve active contracts for companies
-@router.get(
-    "/company/{empresa_id}",
-    response_model=List[contract_scheme.ContractResponse]
-)
-def get_company_contracts(
-    empresa_id: UUID,
-    db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
-):
-    return contract_service.get_company_contracts(db, empresa_id)
-
-
-# Retrieve active contracts
-@router.get(
-    "/active",
-    response_model=List[contract_scheme.ContractResponse]
-)
-def get_active_contracts(
-    db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
-):
-    return contract_service.get_active_contracts(db)
-
-
 # Update contract information
 @router.put(
     "/{contract_id}",
@@ -134,15 +134,15 @@ def get_active_contracts(
 def update_contract(
     contract_id: UUID,
 
-    fecha_inicio: date = Form(None),
-    fecha_fin: date = Form(None),
+    start_date: date = Form(None),
+    end_date: date = Form(None),
 
-    tarifa_base: Decimal = Form(None),
+    base_rate: Decimal = Form(None),
 
-    descripcion: str = Form(None),
-    terminos: str = Form(None),
+    description: str = Form(None),
+    terms: str = Form(None),
 
-    activo: bool = Form(None),
+    is_active: bool = Form(None),
 
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
@@ -150,12 +150,12 @@ def update_contract(
 
     # Build validated update schema from form data
     contract_in = contract_scheme.ContractUpdate(
-        fecha_inicio=fecha_inicio,
-        fecha_fin=fecha_fin,
-        tarifa_base=tarifa_base,
-        descripcion=descripcion,
-        terminos=terminos,
-        activo=activo
+        start_date=start_date,
+        end_date=end_date,
+        base_rate=base_rate,
+        description=description,
+        terms=terms,
+        is_active=is_active
     )
 
     return contract_service.update_contract(

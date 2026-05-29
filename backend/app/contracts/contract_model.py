@@ -26,7 +26,7 @@ from app.database.base import Base
 
 # Contract ORM model definition
 class Contract(Base):
-    __tablename__ = "contratos"
+    __tablename__ = "contracts"
 
     # Primary key UUID
     id = Column(
@@ -38,40 +38,43 @@ class Contract(Base):
 
     # Foreign key relationship:
     # Every contract must belong to one company
-    empresa_id = Column(
+    company_id = Column(
         Uuid(as_uuid=True),
-        ForeignKey("empresas.id"),
+        ForeignKey("companies.id"),
         nullable=False
     )
 
+    # Contract Number
+    contract_number = Column(String(50), unique=True, nullable=False)
+    
     # Contract validity dates
-    fecha_inicio = Column(Date, nullable=False)
-    fecha_fin = Column(Date, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
 
     # Base accommodation tariff
-    tarifa_base = Column(
+    base_rate = Column(
         Numeric(12, 2),
         nullable=False
     )
 
     # General contract description
-    descripcion = Column(Text, nullable=True)
+    description = Column(Text, nullable=True)
 
     # Contract negotiated terms:
     # Stores business agreements between hotel and company
-    terminos = Column(Text, nullable=False)
+    terms = Column(Text, nullable=False)
 
     # Contract active/inactive status
-    activo = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True)
 
     # Audit timestamps
-    creado_en = Column(
+    created_at = Column(
         DateTime,
         default=datetime.utcnow,
         nullable=True
     )
 
-    actualizado_en = Column(
+    updated_at = Column(
         DateTime,
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
@@ -83,7 +86,7 @@ class Contract(Base):
     company = relationship(
         "Company",
         back_populates="contracts",
-        foreign_keys=[empresa_id]
+        foreign_keys=[company_id]
     )
 
 

@@ -2,7 +2,7 @@
 
 
 # Start file:
-from datetime import date
+from datetime import date, datetime
 from typing import cast
 
 from uuid import UUID
@@ -27,6 +27,12 @@ from . import (
 
 from app.companies import company_repository
 
+def generate_contract_number(db: Session) -> str:
+    current_year = datetime.now().year
+    
+    total_contracts = len(contract_repository.get_all_contracts(db)) + 1
+    
+    return f"CTR-{current_year}-{total_contracts:05d}"
 
 # Create new contract
 def create_contract(
@@ -36,7 +42,7 @@ def create_contract(
     # Validate company existence
     company = company_repository.get_company_by_id(
         db,
-        contract_in.empresa_id
+        contract_in.company_id
     )
 
     if not company:
@@ -46,14 +52,14 @@ def create_contract(
         )
     
     # Prevent contracts for inactive companies
-    if not bool(company.activo):
+    if not bool(company.is_active):
         raise HTTPException(
             status_code=400,
             detail="Company is inactive"
         )
     
     # Validate contract dates
-    if contract_in.fecha_fin <= contract_in.fecha_inicio:
+    if contract_in.end_date <= contract_in.start_date:
         raise HTTPException(
             status_code=400,
             detail="Contract end date must be greater than start date"
@@ -62,17 +68,21 @@ def create_contract(
     # Prevent overlapping of periods
     if contract_repository.check_overlapping_contracts(
         db,
-        contract_in.empresa_id,
-        contract_in.fecha_inicio,
-        contract_in.fecha_fin
+        contract_in.company_id,
+        contract_in.start_date,
+        contract_in.end_date
     ):
         raise HTTPException(
             status_code=400,
             detail="Company already has an active contract with overlapping dates"
         )
 
+    contract_number = generate_contract_number(db)
+    
     contract_data = contract_in.model_dump()
-
+    
+    contract_data["contract_number"] = contract_number
+    
     return contract_repository.create_contract(
         db,
         contract_data
@@ -125,12 +135,12 @@ def update_contract(
     # Resolve final contract dates
     new_start_date = cast(
         date,
-        contract_in.fecha_inicio or contract.fecha_inicio
+        contract_in.start_date or contract.start_date
     )
 
     new_end_date = cast(
         date,
-        contract_in.fecha_fin or contract.fecha_fin
+        contract_in.end_date or contract.end_date
     )
 
     # Validate final contract date range
@@ -140,10 +150,10 @@ def update_contract(
             detail="Invalid contract date range"
         )
     
-    # ← AGREGAR: Validar solapamiento excluyendo el contrato actual
+    # Validate overlap excluding the current contract
     if contract_repository.check_overlapping_contracts(
         db,
-        cast(UUID, contract.empresa_id),
+        cast(UUID, contract.company_id),
         new_start_date,
         new_end_date,
         exclude_contract_id=contract_id
@@ -179,17 +189,17 @@ def toggle_contract_status(
             detail="Contract not found"
         )
 
-    new_status = not bool(contract.activo)
+    new_status = not bool(contract.is_active)
 
     return contract_repository.update_contract(
         db,
         contract_id,
-        {"activo": new_status}
+        {"is_active": new_status}
     )
 
 
-def get_company_contracts(db: Session, empresa_id: UUID):
-    return contract_repository.get_company_contracts(db, empresa_id)
+def get_company_contracts(db: Session, company_id: UUID):
+    return contract_repository.get_company_contracts(db, company_id)
 
 
 # Retrieve active contracts
@@ -223,25 +233,26 @@ def generate_contract_pdf(
 
     COMPANY INFORMATION
 
-    Company Name: {company.nombre}
+    Company Name: {company.name}
     NIT: {company.nit}
-    Address: {company.direccion}
-    Email: {company.correo}
-    Phone: {company.telefono}
+    Address: {company.address}
+    Email: {company.email}
+    Phone: {company.phone}
 
     CONTRACT INFORMATION
 
-    Start Date: {contract.fecha_inicio}
-    End Date: {contract.fecha_fin}
-    Base Tariff: ${contract.tarifa_base}
+    Contract Number: {contract.contract_number}
+    Start Date: {contract.start_date}
+    End Date: {contract.end_date}
+    Base Tariff: ${contract.base_rate}
 
     CONTRACT TERMS
 
-    {contract.terminos}
+    {contract.terms}
 
     ADDITIONAL DESCRIPTION
 
-    {contract.descripcion or "No additional description provided."}
+    {contract.description or "No additional description provided."}
     
     COMPANY SIGNATURE: _______________________
     .
