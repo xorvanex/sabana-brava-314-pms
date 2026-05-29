@@ -9,7 +9,11 @@ export function useSessionUser() {
     try {
       const raw = localStorage.getItem("usuario");
       if (raw) {
-        setUser(JSON.parse(raw));
+        const userData = JSON.parse(raw);
+        setUser({
+          nombre: userData.nombre || userData.name || "",
+          rol: userData.rol || userData.role || ""
+        });
       }
     } catch {
       setUser(null);
