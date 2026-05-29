@@ -1,10 +1,5 @@
 # File path: backend/app/rooms/room_service.py
 
-# Service Layer:
-# - Handles room business logic
-# - Validates room operations
-# - Coordinates repositories and rules
-# - Raises HTTP exceptions when needed
 
 # start file:
 
@@ -132,3 +127,5 @@ def delete_room_service(
         db,
         room
     )
+
+# End file:

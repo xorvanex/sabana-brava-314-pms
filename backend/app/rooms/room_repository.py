@@ -1,10 +1,5 @@
 # File path: bakend/app/rooms/room_repository.py
 
-# Repository Layer 
-# - Handles direct database operations
-# - Executes CRUD queries for rooms
-# - Separates persistence logic from business logic
-# - Interacts with SQLAlchemy sessions
 
 # Start file:
 
@@ -68,3 +63,5 @@ def delete_room(db: Session, room: Room):
     db.refresh(room)
     
     return room
+
+# End file:

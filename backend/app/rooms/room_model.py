@@ -1,10 +1,5 @@
 # File path: bakend/app/rooms/room_model.py
 
-# ORM Model Layer:
-# -
-# -
-# -
-# -
 
 # Start file:
 
@@ -42,7 +37,7 @@ class Room(Base):
     numero = Column(String(20), unique=True, nullable=False, index=True)
     
     # Room Description
-    descripcion = Column(String, nullable=True)
+    descripcion = Column(String(500), nullable=True)
     
     # Current Room state
     estado = Column(
@@ -57,3 +52,5 @@ class Room(Base):
     
     # Room Status Flag
     is_active = Column(Boolean, default=True, nullable=False)
+
+# End file:

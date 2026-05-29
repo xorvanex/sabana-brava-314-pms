@@ -1,10 +1,5 @@
 # File path: backend/app/rooms/room_router.py
 
-# Router Layer:
-# - Defines room API endpoints
-# - Connects HTTP requests with services
-# - Handles dependency injection
-# - Organizes room routes
 
 # Start file:
 
@@ -14,6 +9,8 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.database.sessions import get_db
+
+from app.auth.dependencies import require_admin_or_owner
 
 from app.rooms.room_scheme import (
     RoomCreate,
@@ -46,12 +43,10 @@ router = APIRouter(
 )
 def create_room(
     room_data: RoomCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
-    return create_room_service(
-        db,
-        room_data
-    )
+    return create_room_service(db, room_data)
 
 
 # Get all rooms endpoint
@@ -88,13 +83,10 @@ def get_room_by_id(
 def update_room(
     room_id: uuid.UUID,
     room_data: RoomUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
-    return update_room_service(
-        db,
-        room_id,
-        room_data
-    )
+    return update_room_service(db, room_id, room_data)
 
 
 # Update room status endpoint
@@ -105,13 +97,10 @@ def update_room(
 def update_room_status(
     room_id: uuid.UUID,
     status_data: RoomStatusUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
-    return update_room_status_service(
-        db,
-        room_id,
-        status_data
-    )
+    return update_room_status_service(db, room_id, status_data)
 
 
 # Soft delete room endpoint
@@ -121,9 +110,9 @@ def update_room_status(
 )
 def delete_room(
     room_id: uuid.UUID,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
-    delete_room_service(
-        db,
-        room_id
-    )
+    delete_room_service(db, room_id)
+
+# End file:
