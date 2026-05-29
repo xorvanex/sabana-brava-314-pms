@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import { useLogin } from "@/auth/hooks/useLogin";
-import Button from "@/shared/components/ui/button/Button";
-import Input from "@/shared/components/ui/input/Input";
-import Spinner from "@/shared/components/ui/spinner/Spinner";
+import Button from "@/shared/globalComponents/ui/button/Button";
+import Input from "@/shared/globalComponents/ui/input/Input";
+import Spinner from "@/shared/globalComponents/ui/spinner/Spinner";
 
 const BACKGROUND_IMAGE = "/assets/images/fachada-hotel.png";
 const LOGO_IMAGE = "/assets/images/logo-hotel.png";
