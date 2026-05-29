@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getAllUsers, toggleUserStatus } from "@/owner/services/owner.services";
+import { getAllUsers, toggleUserStatus } from "@/shared/serviceGlobal/user.services";
 
 export function useUsers() {
   const [users, setUsers] = useState([]);
@@ -12,7 +12,13 @@ export function useUsers() {
     try {
       setLoading(true);
       const data = await getAllUsers();
-      setUsers(data);
+      const adaptedUsers = data.map(user => ({
+        ...user,
+        nombre: user.nombre || user.name || "",
+        rol: user.rol || user.role || "",
+        telefono: user.telefono || user.phone || "",
+      }));
+      setUsers(adaptedUsers);
     } catch (err) {
       setError(err.message);
     } finally {
