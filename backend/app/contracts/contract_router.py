@@ -1,10 +1,5 @@
 # File path: backend/app/contracts/contract_router.py
 
-# API Layer:
-# - Handles HTTP requests
-# - Defines API endpoints
-# - Validates request input
-# - Delegates logic to services
 
 # Start file:
 
@@ -88,7 +83,7 @@ def get_all_contracts(
     return contract_service.get_all_contracts(db)
 
 
-# Retrieve contract by ID
+# Retrieve contract by company
 @router.get(
     "/{contract_id}",
     response_model=contract_scheme.ContractResponse
@@ -104,6 +99,31 @@ def get_contract_by_id(
         db,
         contract_id
     )
+
+
+# Retrieve active contracts for companies
+@router.get(
+    "/company/{empresa_id}",
+    response_model=List[contract_scheme.ContractResponse]
+)
+def get_company_contracts(
+    empresa_id: UUID,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return contract_service.get_company_contracts(db, empresa_id)
+
+
+# Retrieve active contracts
+@router.get(
+    "/active",
+    response_model=List[contract_scheme.ContractResponse]
+)
+def get_active_contracts(
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return contract_service.get_active_contracts(db)
 
 
 # Update contract information

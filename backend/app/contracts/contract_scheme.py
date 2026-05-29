@@ -1,10 +1,5 @@
 # File path: backend/app/contracts/contract_scheme.py
 
-# Schema Validation Layer:
-# - Defines Pydantic schemas
-# - Validates request data
-# - Structures API responses
-# - Enforces data typing
 
 # Start file:
 
@@ -25,12 +20,12 @@ class ContractCreate(BaseModel):
     fecha_inicio: date
     fecha_fin: date
 
-    tarifa_base: Decimal = Field(..., gt=0)
+    tarifa_base: Decimal = Field(..., gt=0, max_digits=12, decimal_places=2)
 
-    descripcion: Optional[str] = None
+    descripcion: Optional[str] = Field(None, max_length=5000)
 
     # Contract legal/business agreements
-    terminos: str = Field(..., min_length=10)
+    terminos: str = Field(..., min_length=10, max_length=5000)
 
 
 # Schema for contract updates
@@ -39,10 +34,10 @@ class ContractUpdate(BaseModel):
     fecha_inicio: Optional[date] = None
     fecha_fin: Optional[date] = None
 
-    tarifa_base: Optional[Decimal] = Field(None, gt=0)
+    tarifa_base: Optional[Decimal] = Field(None, gt=0, max_digits=12, decimal_places=2)
 
-    descripcion: Optional[str] = None
-    terminos: Optional[str] = Field(None, min_length=10)
+    descripcion: Optional[str] = Field(None, max_length=5000)
+    terminos: Optional[str] = Field(None, min_length=10, max_length=5000)
 
     activo: Optional[bool] = None
 

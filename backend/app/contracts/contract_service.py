@@ -1,10 +1,5 @@
 # File path: backend/app/contracts/contract_service.py
 
-# Service Layer:
-# - Contains business rules
-# - Validates domain logic
-# - Calls repository for persistence
-# - Never directly interacts with HTTP layer
 
 # Start file:
 from datetime import date
@@ -38,7 +33,6 @@ def create_contract(
     db: Session,
     contract_in: contract_scheme.ContractCreate
 ):
-
     # Validate company existence
     company = company_repository.get_company_by_id(
         db,
@@ -50,11 +44,12 @@ def create_contract(
             status_code=404,
             detail="Company not found"
         )
+    
     # Prevent contracts for inactive companies
     if not bool(company.activo):
         raise HTTPException(
-            status_code = 400,
-            detail= "Company is inactive"
+            status_code=400,
+            detail="Company is inactive"
         )
     
     # Validate contract dates
@@ -64,18 +59,16 @@ def create_contract(
             detail="Contract end date must be greater than start date"
         )
 
-    # Prevent multiple active contracts for same company
-    existing_contracts = (
-        contract_repository.get_company_active_contracts(
-            db,
-            contract_in.empresa_id
-        )
-    )
-
-    if existing_contracts:
+    # Prevent overlapping of periods
+    if contract_repository.check_overlapping_contracts(
+        db,
+        contract_in.empresa_id,
+        contract_in.fecha_inicio,
+        contract_in.fecha_fin
+    ):
         raise HTTPException(
             status_code=400,
-            detail="Company already has an active contract"
+            detail="Company already has an active contract with overlapping dates"
         )
 
     contract_data = contract_in.model_dump()
@@ -130,8 +123,6 @@ def update_contract(
         )
 
     # Resolve final contract dates
-    # Uses new values if provided, otherwise keeps current values
-
     new_start_date = cast(
         date,
         contract_in.fecha_inicio or contract.fecha_inicio
@@ -147,6 +138,19 @@ def update_contract(
         raise HTTPException(
             status_code=400,
             detail="Invalid contract date range"
+        )
+    
+    # ← AGREGAR: Validar solapamiento excluyendo el contrato actual
+    if contract_repository.check_overlapping_contracts(
+        db,
+        cast(UUID, contract.empresa_id),
+        new_start_date,
+        new_end_date,
+        exclude_contract_id=contract_id
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Updated contract dates overlap with existing contract"
         )
     
     update_data = contract_in.model_dump(exclude_unset=True)
@@ -182,6 +186,16 @@ def toggle_contract_status(
         contract_id,
         {"activo": new_status}
     )
+
+
+def get_company_contracts(db: Session, empresa_id: UUID):
+    """Obtiene todos los contratos de una empresa"""
+    return contract_repository.get_company_contracts(db, empresa_id)
+
+
+# Retrieve active contracts
+def get_active_contracts(db: Session):
+    return contract_repository.get_active_contracts(db)
 
 
 # Generate contract PDF dynamically in memory

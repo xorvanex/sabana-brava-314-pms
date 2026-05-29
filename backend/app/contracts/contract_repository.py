@@ -1,12 +1,9 @@
 # File path: backend/app/contracts/contract_repository.py
 
-# Repository Layer:
-# - Handles database operations
-# - Executes ORM queries
-# - Manages entity persistence
-# - Contains no business logic
 
 # Start file:
+
+from datetime import date
 
 from uuid import UUID
 
@@ -41,7 +38,7 @@ def get_all_contracts(db: Session):
     )
 
 
-# Retrieve active contracts by company
+# Retrieve contract by company
 def get_company_active_contracts(
     db: Session,
     empresa_id: UUID
@@ -56,6 +53,26 @@ def get_company_active_contracts(
         .all()
     )
 
+
+# Retrieve contracts by company
+def get_company_contracts(db: Session, empresa_id: UUID):
+    """Obtiene todos los contratos (activos e inactivos) de una empresa"""
+    return (
+        db.query(Contract)
+        .filter(Contract.empresa_id == empresa_id)
+        .options(joinedload(Contract.company))
+        .all()
+    )
+
+
+# Retrieve active contracts
+def get_active_contracts(db: Session):
+    return (
+        db.query(Contract)
+        .filter(Contract.activo == True)
+        .options(joinedload(Contract.company))
+        .all()
+    )
 
 # Create new contract record
 def create_contract(
@@ -94,5 +111,40 @@ def update_contract(
 
     return contract
 
+
+def check_overlapping_contracts(
+    db: Session,
+    empresa_id: UUID,
+    fecha_inicio: date,
+    fecha_fin: date,
+    exclude_contract_id: UUID | None = None
+) -> bool:
+    """
+    Check if there are contracts with overlapping periods for a company.
+    
+    Args:
+        db: BD Session
+        empresa_id: Company ID
+        fecha_inicio: Start date of the new contract
+        fecha_fin: End date of the new contract
+        exclude_contract_id: Contract ID to exclude (for updates)
+        
+    Returns:
+        True if there is overlap, False if there is no
+    """
+    query = db.query(Contract).filter(
+        Contract.empresa_id == empresa_id,
+        Contract.activo == True,
+        # Overlap logic:
+        # Two periods overlap if:
+        # fecha_inicio_new < fecha_fin_existing AND fecha_fin_new > fecha_inicio_existing
+        Contract.fecha_inicio < fecha_fin,
+        Contract.fecha_fin > fecha_inicio
+    )
+    
+    if exclude_contract_id:
+        query = query.filter(Contract.id != exclude_contract_id)
+    
+    return query.first() is not None
 
 # End file:
