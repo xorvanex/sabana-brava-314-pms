@@ -1,3 +1,5 @@
+# File path: backend/app/contracts/contract_model.py
+
 # ORM Model Layer:
 # - Defines database entities
 # - Maps ORM models to tables

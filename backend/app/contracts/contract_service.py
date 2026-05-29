@@ -1,3 +1,5 @@
+# File path: backend/app/contracts/contract_service.py
+
 # Service Layer:
 # - Contains business rules
 # - Validates domain logic

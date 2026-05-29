@@ -1,3 +1,5 @@
+# File path: backend/app/contracts/contract_repository.py
+
 # Repository Layer:
 # - Handles database operations
 # - Executes ORM queries
