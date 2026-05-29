@@ -1,3 +1,5 @@
+# File path: backend/app/company/company_repository.py
+
 # Repository Layer:
 # - Handles database operations
 # - Executes ORM queries

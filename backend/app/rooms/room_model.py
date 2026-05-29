@@ -14,16 +14,16 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Enum
-from sqlalchemy.types import Uuid
+from sqlalchemy.types import Uuid 
 
 from app.database.base import Base
 
 # Room state enumeration
 class RoomStateEnum(str, enum.Enum):
     AVAILABLE = "DISPONIBLE"
-    OCUPIED = "OCUPADA"
+    OCCUPIED = "OCUPADA"
     LOCKED = "BLOQUEADA"
-    IN_MAINTENANCE = "EN MANTENIMIENTO"
+    IN_MAINTENANCE = "MANTENIMIENTO"
     OUT_SERVICE = "FUERA DE SERVICIO"
 
 # Rooms ORM model definition

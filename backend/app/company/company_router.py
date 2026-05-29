@@ -1,3 +1,5 @@
+# File path: backend/app/company/company_router.py
+
 # API Layer:
 # - Handles HTTP requests
 # - Defines API endpoints

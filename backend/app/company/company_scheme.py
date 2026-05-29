@@ -1,3 +1,5 @@
+# File path: backend/app/company/company_scheme.py
+
 # Schema Validation Layer:
 # - Defines Pydantic schemas
 # - Validates request data

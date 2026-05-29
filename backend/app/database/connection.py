@@ -1,3 +1,5 @@
+# File path: backend/app/database/connection.py
+
 # Database Connection Layer:
 # - Configures database engine
 # - Loads environment variables

@@ -1,3 +1,5 @@
+# File path: backend/app/company/company_model.py
+
 # ORM Model Layer:
 # - Defines database entities
 # - Maps ORM models to tables
