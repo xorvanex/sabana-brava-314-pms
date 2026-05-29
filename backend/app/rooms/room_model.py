@@ -14,7 +14,7 @@ from sqlalchemy.types import Uuid
 from app.database.base import Base
 
 # Room state enumeration
-class RoomStateEnum(str, enum.Enum):
+class RoomStatusEnum(str, enum.Enum):
     AVAILABLE = "AVAILABLE"
     OCCUPIED = "OCCUPIED"
     BLOCKED = "BLOCKED"
@@ -23,7 +23,7 @@ class RoomStateEnum(str, enum.Enum):
 
 # Rooms ORM model definition
 class Room(Base):
-    __tablename__ = "habitaciones"
+    __tablename__ = "rooms"
     
     # Primary key UUID
     id = Column(
@@ -34,23 +34,26 @@ class Room(Base):
     )
     
     # Room number identifier
-    numero = Column(String(20), unique=True, nullable=False, index=True)
+    room_number = Column(String(20), unique=True, nullable=False, index=True)
     
     # Room Description
-    descripcion = Column(String(500), nullable=True)
+    description = Column(String(500), nullable=True)
+    
+    # Room capacity
+    capacity = Column(Integer, nullable=False, default=2)
     
     # Current Room state
-    estado = Column(
-        Enum(RoomStateEnum, name="estado_habitacion_enum", create_type=False),
+    status = Column(
+        Enum(RoomStatusEnum, name="room_status_enum", create_type=False),
         nullable=False,
-        default=RoomStateEnum.AVAILABLE
+        default=RoomStatusEnum.AVAILABLE
     )
-    
-    # Timestam fields
-    creado_en = Column(DateTime, default=datetime.utcnow, nullable=False)
-    actualizado_en = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
     # Room Status Flag
     is_active = Column(Boolean, default=True, nullable=False)
+    
+    # Timestam fields
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 # End file:

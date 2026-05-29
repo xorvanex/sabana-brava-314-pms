@@ -29,10 +29,10 @@ def get_room_by_id(db: Session, room_id: uuid.UUID):
     )
 
 # Get room by number 
-def get_room_by_number(db: Session, numero: str):
+def get_room_by_number(db: Session, room_number: str):
     return (
         db.query(Room)
-        .filter(Room.numero == numero)
+        .filter(Room.room_number == room_number)
         .first()
     )
 

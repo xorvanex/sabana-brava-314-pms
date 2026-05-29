@@ -5,7 +5,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Form
 from sqlalchemy.orm import Session
 
 from app.database.sessions import get_db
@@ -18,6 +18,8 @@ from app.rooms.room_scheme import (
     RoomStatusUpdate,
     RoomResponse
 )
+
+from app.rooms.room_model import RoomStatusEnum
 
 from app.rooms.room_service import (
     create_room_service,
@@ -42,10 +44,19 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED
 )
 def create_room(
-    room_data: RoomCreate,
+    room_number: str = Form(...),
+    description: str = Form(None),
+    room_status: RoomStatusEnum = Form(RoomStatusEnum.AVAILABLE, alias="status"),
+    
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
+    # Reconstruimos el esquema Pydantic a partir de los datos del formulario
+    room_data = RoomCreate(
+        room_number=room_number,
+        description=description,
+        status=room_status
+    )
     return create_room_service(db, room_data)
 
 
@@ -82,10 +93,22 @@ def get_room_by_id(
 )
 def update_room(
     room_id: uuid.UUID,
-    room_data: RoomUpdate,
+    
+    room_number: str = Form(None),
+    description: str = Form(None),
+    room_status: RoomStatusEnum = Form(None, alias="status"),
+    is_active: bool = Form(None),
+
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
+    # Construimos el esquema con los valores opcionales
+    room_data = RoomUpdate(
+        room_number=room_number,
+        description=description,
+        status=room_status,
+        is_active=is_active
+    )
     return update_room_service(db, room_id, room_data)
 
 
@@ -96,10 +119,13 @@ def update_room(
 )
 def update_room_status(
     room_id: uuid.UUID,
-    status_data: RoomStatusUpdate,
+    room_status: RoomStatusEnum = Form(..., alias="status"),
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
+    status_data = RoomStatusUpdate(
+        status=room_status
+    )
     return update_room_status_service(db, room_id, status_data)
 
 

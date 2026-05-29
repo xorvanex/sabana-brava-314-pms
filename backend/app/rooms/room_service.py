@@ -21,7 +21,7 @@ def create_room_service(db: Session, room_data: RoomCreate):
     
     existing_room = room_repository.get_room_by_number(
         db,
-        room_data.numero
+        room_data.room_number
     )
     
     if existing_room:
@@ -67,11 +67,11 @@ def update_room_service(
             detail="Room not found"
         )
     
-    if room_data.numero:
+    if room_data.room_number:
         
         existing_room = room_repository.get_room_by_number(
             db,
-            room_data.numero
+            room_data.room_number
         )
         
         if (existing_room is not None and str(existing_room.id) != str(room.id)):
