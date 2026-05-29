@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createReceptionist } from "@/owner/services/owner.services";
+import { createReceptionist } from "@/shared/serviceGlobal/user.services";
 
 export function useCreateUser(onSuccess) {
   const [formData, setFormData] = useState({
@@ -35,10 +35,12 @@ export function useCreateUser(onSuccess) {
   };
 
   return {
-    formData,
-    handleChange,
-    handleSubmit,
-    error,
-    loading,
-  };
+  formData,
+  setFormData,
+  handleChange,
+  handleSubmit,
+  error,
+  setError, 
+  loading,
+};
 }
