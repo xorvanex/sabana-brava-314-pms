@@ -52,6 +52,10 @@ export default function ProfileMenu() {
     router.replace(ROUTES.LOGIN || "/auth/login");
   };
 
+  // Adaptar para aceptar ambos formatos (español e inglés)
+  const nombre = user?.nombre || user?.name || "";
+  const rol = user?.rol || user?.role || "";
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -66,10 +70,10 @@ export default function ProfileMenu() {
         </div>
         <div className="flex flex-col items-start text-left leading-tight">
           <p className="text-sm font-semibold max-w-[160px] truncate">
-            {user?.nombre || "—"}
+            {nombre || "—"}
           </p>
           <p className="text-xs text-white/80 max-w-[160px] truncate">
-            {user?.rol || ""}
+            {rol || ""}
           </p>
         </div>
       </button>
