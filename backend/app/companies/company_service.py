@@ -1,10 +1,5 @@
-# File path: backend/app/company/company_service.py
+# File path: backend/app/companies/company_service.py
 
-# Service Layer:
-# - Contains business rules
-# - Validates domain logic
-# - Calls repository for persistence
-# - Never directly interacts with HTTP layer
 
 # Start file:
 
@@ -61,11 +56,23 @@ def get_company_by_id(
 
     return company
 
+# Retrieve company by NIT
+def get_company_by_nit(db: Session, nit: str):
+    company = company_repository.get_company_by_nit(db, nit)
+    if not company:
+        raise HTTPException(
+            status_code=404,
+            detail="Company not found"
+        )
+    return company
 
 # Retrieve all companies
 def get_all_companies(db: Session):
     return company_repository.get_all_companies(db)
 
+# Retrieve active companies
+def get_active_companies(db: Session):
+    return company_repository.get_active_companies(db)
 
 # Update company information
 def update_company(

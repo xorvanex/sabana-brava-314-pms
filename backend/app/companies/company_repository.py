@@ -1,10 +1,5 @@
-# File path: backend/app/company/company_repository.py
+# File path: backend/app/companies/company_repository.py
 
-# Repository Layer:
-# - Handles database operations
-# - Executes ORM queries
-# - Manages entity persistence
-# - Contains no business logic
 
 # Start file:
 
@@ -29,6 +24,9 @@ def get_company_by_nit(db: Session, nit: str) -> Company | None:
 def get_all_companies(db: Session):
     return db.query(Company).all()
 
+# Retrieve active companies
+def get_active_companies(db: Session):
+    return db.query(Company).filter(Company.activo == True).all()
 
 # Create a new company record
 def create_company(db: Session, company_data: dict) -> Company:

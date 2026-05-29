@@ -1,10 +1,5 @@
-# File path: backend/app/company/company_model.py
+# File path: backend/app/companies/company_model.py
 
-# ORM Model Layer:
-# - Defines database entities
-# - Maps ORM models to tables
-# - Configures database columns
-# - Handles entity structure
 
 # Start file:
 
@@ -38,7 +33,7 @@ class Company(Base):
     nit = Column(String(30), unique=True, nullable=False, index=True)
 
     # Company contact information
-    direccion = Column(String, nullable=True)
+    direccion = Column(String(250), nullable=True)
     telefono = Column(String(20), nullable=True)
     correo = Column(String(150), nullable=True)
 

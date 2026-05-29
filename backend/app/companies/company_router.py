@@ -1,10 +1,5 @@
-# File path: backend/app/company/company_router.py
+# File path: backend/app/companies/company_router.py
 
-# API Layer:
-# - Handles HTTP requests
-# - Defines API endpoints
-# - Validates request input
-# - Delegates logic to services
 
 # Start file:
 
@@ -76,6 +71,18 @@ def get_all_companies(
     return company_service.get_all_companies(db)
 
 
+# Retrieve active companies
+@router.get(
+    "/active",
+    response_model=List[company_scheme.CompanyResponse]
+)
+def get_active_companies(
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return company_service.get_active_companies(db)
+
+
 # Retrieve company by ID
 @router.get(
     "/{company_id}",
@@ -93,6 +100,18 @@ def get_company_by_id(
         company_id
     )
 
+# Retrieve company by NIT
+@router.get(
+    "/search/nit/{nit}",
+    response_model=company_scheme.CompanyResponse
+)
+def get_company_by_nit(
+    nit: str,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    company = company_service.get_company_by_nit(db, nit)
+    return company
 
 # Update company information
 @router.put(

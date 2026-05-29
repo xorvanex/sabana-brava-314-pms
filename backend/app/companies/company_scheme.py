@@ -1,10 +1,5 @@
-# File path: backend/app/company/company_scheme.py
+# File path: backend/app/companies/company_scheme.py
 
-# Schema Validation Layer:
-# - Defines Pydantic schemas
-# - Validates request data
-# - Structures API responses
-# - Enforces data typing
 
 # Start file:
 
@@ -20,9 +15,9 @@ class CompanyCreate(BaseModel):
 
     nit: str = Field(..., min_length=5, max_length=30)
 
-    direccion: Optional[str] = None
-    telefono: Optional[str] = None
-    correo: Optional[EmailStr] = None
+    direccion: Optional[str] = Field(None, max_length=250)
+    telefono: Optional[str] = Field(None, max_length=20)
+    correo: Optional[EmailStr] = Field(None, max_length=150)
 
 
 # Schema for company updates
@@ -31,9 +26,9 @@ class CompanyUpdate(BaseModel):
 
     nit: Optional[str] = Field(None, min_length=5, max_length=30)
 
-    direccion: Optional[str] = None
-    telefono: Optional[str] = None
-    correo: Optional[EmailStr] = None
+    direccion: Optional[str] = Field(None, max_length=250)
+    telefono: Optional[str] = Field(None, max_length=20)
+    correo: Optional[EmailStr] = Field(None, max_length=150)
 
     activo: Optional[bool] = None
 
