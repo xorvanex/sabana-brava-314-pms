@@ -15,7 +15,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from app.company.company_scheme import CompanyBasicResponse
+from app.companies.company_scheme import CompanyBasicResponse
 
 # Schema for contract creation
 class ContractCreate(BaseModel):

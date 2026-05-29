@@ -30,7 +30,7 @@ from . import (
     contract_scheme
 )
 
-from app.company import company_repository
+from app.companies import company_repository
 
 
 # Create new contract

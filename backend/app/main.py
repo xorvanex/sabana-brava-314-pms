@@ -11,7 +11,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.users.user_router import router as user_router
-from app.company.company_router import router as company_router
+from app.companies.company_router import router as company_router
 from app.contracts.contract_router import router as contract_router
 from app.rooms.room_router import router as room_router
 # FastAPI application initialization
