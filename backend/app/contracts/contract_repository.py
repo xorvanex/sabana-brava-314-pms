@@ -56,7 +56,6 @@ def get_company_active_contracts(
 
 # Retrieve contracts by company
 def get_company_contracts(db: Session, empresa_id: UUID):
-    """Obtiene todos los contratos (activos e inactivos) de una empresa"""
     return (
         db.query(Contract)
         .filter(Contract.empresa_id == empresa_id)

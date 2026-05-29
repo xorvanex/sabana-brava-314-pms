@@ -189,7 +189,6 @@ def toggle_contract_status(
 
 
 def get_company_contracts(db: Session, empresa_id: UUID):
-    """Obtiene todos los contratos de una empresa"""
     return contract_repository.get_company_contracts(db, empresa_id)
 
 
