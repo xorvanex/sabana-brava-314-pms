@@ -26,7 +26,7 @@ def get_all_companies(db: Session):
 
 # Retrieve active companies
 def get_active_companies(db: Session):
-    return db.query(Company).filter(Company.activo == True).all()
+    return db.query(Company).filter(Company.is_active == True).all()
 
 # Create a new company record
 def create_company(db: Session, company_data: dict) -> Company:

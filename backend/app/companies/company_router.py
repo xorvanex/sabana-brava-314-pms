@@ -33,11 +33,12 @@ router = APIRouter(
     status_code=status.HTTP_201_CREATED
 )
 def create_company(
-    nombre: str = Form(...),
+    name: str = Form(...),
     nit: str = Form(...),
-    direccion: str = Form(None),
-    telefono: str = Form(None),
-    correo: str = Form(None),
+    company_representative: str = Form(...),
+    address: str = Form(None),
+    phone: str = Form(None),
+    email: str = Form(None),
 
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
@@ -45,11 +46,12 @@ def create_company(
 
     # Build validated Pydantic schema from form data
     company_in = company_scheme.CompanyCreate(
-        nombre=nombre,
+        name=name,
         nit=nit,
-        direccion=direccion,
-        telefono=telefono,
-        correo=correo
+        company_representative=company_representative,
+        address=address,
+        phone=phone,
+        email=email
     )
 
     return company_service.create_company(
@@ -121,12 +123,13 @@ def get_company_by_nit(
 def update_company(
     company_id: UUID,
 
-    nombre: str = Form(None),
+    name: str = Form(None),
     nit: str = Form(None),
-    direccion: str = Form(None),
-    telefono: str = Form(None),
-    correo: str = Form(None),
-    activo: bool = Form(None),
+    company_representative: str = Form(None),
+    address: str = Form(None),
+    phone: str = Form(None),
+    email: str = Form(None),
+    is_active: bool = Form(None),
 
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
@@ -134,12 +137,13 @@ def update_company(
 
     # Build validated update schema from form data
     company_in = company_scheme.CompanyUpdate(
-        nombre=nombre,
+        name=name,
         nit=nit,
-        direccion=direccion,
-        telefono=telefono,
-        correo=correo,
-        activo=activo
+        company_representative=company_representative,
+        addres=address,
+        phone=phone,
+        email=email,
+        is_active=is_active
     )
 
     return company_service.update_company(

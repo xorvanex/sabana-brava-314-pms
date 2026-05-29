@@ -135,12 +135,12 @@ def toggle_company_status(
 
     # Business rule:
     # Toggle company availability for future operations
-    new_status = not bool(company.activo)
+    new_status = not bool(company.is_active)
 
     return company_repository.update_company(
         db,
         company_id,
-        {"activo": new_status}
+        {"is_active": new_status}
     )
 
 
