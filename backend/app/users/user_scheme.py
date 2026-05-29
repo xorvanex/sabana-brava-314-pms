@@ -1,10 +1,5 @@
 # File path: backend/app/users/user_scheme.py
 
-# Schema Validation Layer:
-# - Defines Pydantic schemas
-# - Validates request data
-# - Structures API responses
-# - Enforces data typing
 
 # Start file:
 

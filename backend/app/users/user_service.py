@@ -1,11 +1,6 @@
 
 # File path: backend/app/users/user_service.py
 
-# Service Layer:
-# - Contains business rules
-# - Validates domain logic
-# - Calls repository for persistence
-# - Never directly interacts with HTTP layer
 
 # Start file:
 

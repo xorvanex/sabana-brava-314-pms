@@ -1,10 +1,5 @@
 # File path: backend/app/users/user_model.py
 
-# ORM Model Layer:
-# - Defines database entities
-# - Maps ORM models to tables
-# - Configures database columns
-# - Handles entity structure
 
 # Start file:
 
@@ -30,11 +25,11 @@ class User(Base):
     # Primary key UUID
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
 
-    nombre = Column(String(120), nullable=False)
+    nombre = Column(String(100), nullable=False)
 
     # Unique email identifier
-    email = Column(String(120), unique=True, nullable=False, index=True)
-    telefono = Column(String(50), nullable=True)
+    email = Column(String(150), unique=True, nullable=False, index=True)
+    telefono = Column(String(20), nullable=True)
 
     # Role constrained by Enum type
     rol = Column(Enum(UserRoleEnum, name="user_rol_enum", create_type=False), nullable=False)

@@ -1,10 +1,5 @@
 # File path: backend/app/users/user_router.py
 
-# API Layer:
-# - Handles HTTP requests
-# - Defines API endpoints
-# - Validates request input
-# - Delegates logic to services
 
 # Start file:
 

@@ -1,10 +1,5 @@
 # File path: backend/app/users/user_repository.py
 
-# Repository Layer:
-# - Handles database operations
-# - Executes ORM queries
-# - Manages entity persistence
-# - Contains no business logic
 
 # Start file:
 
