@@ -20,5 +20,13 @@ export async function login(email, password) {
     throw new Error(message);
   }
 
-  return data;
+  // Adaptar la respuesta del backend al formato que espera el frontend
+  return {
+    access_token: data.access_token,
+    token_type: data.token_type,
+    usuario: {
+      nombre: data.user?.name || data.user?.nombre || "",
+      rol: data.user?.role || data.user?.rol || ""
+    }
+  };
 }
