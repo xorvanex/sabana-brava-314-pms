@@ -16,6 +16,7 @@ export const ADMIN_MENU = [
   { label: "Registrar empresa", href: ROUTES.ADMIN_COMPANIES },
   { label: "Generar factura mensual", href: ROUTES.ADMIN_BILLING_GENERATE },
   { label: "Consultar facturación", href: ROUTES.ADMIN_BILLING },
+  { label: "Crear nuevo recepcionista", href: ROUTES.ADMIN_USER },
 
 ];
 
