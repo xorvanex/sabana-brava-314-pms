@@ -14,5 +14,6 @@ export const ROUTES = {
   ADMIN_COMPANIES: "/admin/companies",
   ADMIN_BILLING_GENERATE: "/admin/billing/generate",
   ADMIN_BILLING: "/admin/billing",
+  ADMIN_USER: "/admin/user"
 
 };
