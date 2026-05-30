@@ -1,4 +1,5 @@
 export const ROUTES = {
+  
   HOME: "/",
   LOGIN: "/auth/login",
   INICIO: "/inicio",
@@ -6,4 +7,12 @@ export const ROUTES = {
   OWNER_BILLING: "/owner/billing",
   OWNER_CONTRACTS: "/owner/contracts",
   OWNER_USERS: "/owner/users",
+
+  ADMIN_HOME: "/admin",
+  ADMIN_ROOMS_REGISTER: "/admin/rooms/register",
+  ADMIN_ROOMS_STATUS: "/admin/rooms/status",
+  ADMIN_COMPANIES: "/admin/companies",
+  ADMIN_BILLING_GENERATE: "/admin/billing/generate",
+  ADMIN_BILLING: "/admin/billing",
+
 };
