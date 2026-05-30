@@ -23,7 +23,7 @@ export default function GlobalDashboard() {
 
   const rol = user?.rol || user?.role || "";
   const isOwner = rol === "OWNER" || rol === "DUEÑA";
-  const isAdmin = rol === "ADMINISTRADOR";
+  const isAdmin = rol === "ADMINISTRADOR" || rol === "ADMINISTRATOR";
 
   // Título según rol
   const getTitle = () => {
