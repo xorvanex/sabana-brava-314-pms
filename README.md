@@ -35,13 +35,13 @@ Backend Development In Progress
 * Company management
 * Contract management
 * Contract PDF generation
+* Room management
+* Reservation management
 
 ---
 
 ### Planned Features
 
-* Reservation management
-* Room availability control
 * Room assignment
 * Electronic invoicing
 * Billing reports
@@ -83,6 +83,41 @@ Implemented capabilities:
 * Active contract validation per company
 * Contract date validation
 * Company status validation before contract creation
+* Contract preview PDF generation
+
+---
+
+### Room Management
+
+The backend now includes room administration features.
+
+Implemented capabilities:
+
+* Room registration
+* Unique room number validation
+* Room update operations
+* Room status management
+* Room activation/inactivation
+* Room retrieval by ID
+* Room listing
+* Soft delete functionality
+
+---
+
+### Reservation Management
+
+The system now supports reservation administration.
+
+Implemented capabilities:
+
+* Reservation creation
+* Reservation update operations
+* Reservation activation/inactivation
+* Reservation retrieval by ID
+* Reservation listing
+* Active reservations retrieval
+* Reservations by company
+* Room assignment per reservation
 
 ---
 
@@ -198,20 +233,36 @@ sabana-brava-314-pms/
 │   │   │   ├── user_scheme.py
 │   │   │   └── user_service.py
 │   │   │
-│   │   ├── company/
+│   │   ├── companies/
 │   │   │   ├── company_model.py
 │   │   │   ├── company_repository.py
 │   │   │   ├── company_router.py
 │   │   │   ├── company_scheme.py
 │   │   │   └── company_service.py
 │   │   │
-│   │   ├── contract/
+│   │   ├── contracts/
 │   │   │   ├── contract_model.py
 │   │   │   ├── contract_repository.py
 │   │   │   ├── contract_router.py
 │   │   │   ├── contract_scheme.py
 │   │   │   ├── contract_service.py
-│   │   │   └── contract_pdf_service.py
+│   │   │   └── contract_pdf_generator/
+│   │   │       ├── contract_pdf.py
+│   │   │       └── contract_pdf_styles.py
+│   │   │
+│   │   ├── rooms/
+│   │   │   ├── room_model.py
+│   │   │   ├── room_repository.py
+│   │   │   ├── room_router.py
+│   │   │   ├── room_scheme.py
+│   │   │   └── room_service.py
+│   │   │
+│   │   ├── reservations/
+│   │   │   ├── reservation_model.py
+│   │   │   ├── reservation_repository.py
+│   │   │   ├── reservation_router.py
+│   │   │   ├── reservation_scheme.py
+│   │   │   └── reservation_service.py
 │   │   │
 │   │   └── main.py
 │   │
@@ -271,15 +322,15 @@ Protected roles:
 
 ## Current API Modules
 
-| Module       | Status      |
-| ------------ | ----------- |
-| Auth         | Implemented |
-| Users        | Implemented |
-| Companies    | Implemented |
-| Contracts    | Implemented |
-| Rooms        | Pending     |
-| Reservations | Pending     |
-| Billing      | Pending     |
+| Module       | Status       |
+| ------------ | ------------ |
+| Auth         | Implemented  |
+| Users        | Implemented  |
+| Companies    | Implemented  |
+| Contracts    | Implemented  |
+| Rooms        | Implemented  |
+| Reservations | Implemented  |
+| Billing      | Pending      |
 
 ---
 
@@ -308,26 +359,58 @@ Protected roles:
 
 ### Company Endpoints
 
-| Method | Endpoint                         | Description            |
-| ------ | -------------------------------- | ---------------------- |
-| POST   | `/companies/`                    | Create company         |
-| GET    | `/companies/`                    | Retrieve all companies |
-| GET    | `/companies/{company_id}`        | Retrieve company by ID |
-| PUT    | `/companies/{company_id}`        | Update company         |
-| PATCH  | `/companies/{company_id}/status` | Toggle company status  |
+| Method | Endpoint                         | Description               |
+| ------ | -------------------------------- | ------------------------- |
+| POST   | `/companies/`                    | Create company            |
+| GET    | `/companies/`                    | Retrieve all companies    |
+| GET    | `/companies/active`              | Retrieve active companies |
+| GET    | `/companies/{company_id}`        | Retrieve company by ID    |
+| GET    | `/companies/search/nit/{nit}`    | Retrieve company by NIT   |
+| PUT    | `/companies/{company_id}`        | Update company            |
+| PATCH  | `/companies/{company_id}/status` | Toggle company status     |
 
 ---
 
 ### Contract Endpoints
 
-| Method | Endpoint                          | Description             |
-| ------ | --------------------------------- | ----------------------- |
-| POST   | `/contracts/`                     | Create contract         |
-| GET    | `/contracts/`                     | Retrieve all contracts  |
-| GET    | `/contracts/{contract_id}`        | Retrieve contract by ID |
-| PUT    | `/contracts/{contract_id}`        | Update contract         |
-| PATCH  | `/contracts/{contract_id}/status` | Toggle contract status  |
-| GET    | `/contracts/{contract_id}/pdf`    | Generate contract PDF   |
+| Method | Endpoint                          | Description                  |
+| ------ | --------------------------------- | ---------------------------- |
+| POST   | `/contracts/`                     | Create contract              |
+| GET    | `/contracts/`                     | Retrieve all contracts       |
+| GET    | `/contracts/active`               | Retrieve active contracts    |
+| GET    | `/contracts/company/{company_id}` | Retrieve company contracts   |
+| GET    | `/contracts/{contract_id}`        | Retrieve contract by ID      |
+| PUT    | `/contracts/{contract_id}`        | Update contract              |
+| PATCH  | `/contracts/{contract_id}/status` | Toggle contract status       |
+| GET    | `/contracts/{contract_id}/pdf`    | Generate contract PDF        |
+| POST   | `/contracts/preview/pdf`          | Preview contract PDF         |
+
+---
+
+### Room Endpoints
+
+| Method | Endpoint                     | Description               |
+| ------ | ---------------------------- | ------------------------- |
+| POST   | `/rooms/`                    | Create room               |
+| GET    | `/rooms/`                    | Retrieve all rooms        |
+| GET    | `/rooms/{room_id}`           | Retrieve room by ID       |
+| PUT    | `/rooms/{room_id}`           | Update room               |
+| PATCH  | `/rooms/{room_id}/status`    | Update room status        |
+| DELETE | `/rooms/{room_id}`           | Soft delete room          |
+
+---
+
+### Reservation Endpoints
+
+| Method | Endpoint                                 | Description                   |
+| ------ | ---------------------------------------- | ----------------------------- |
+| POST   | `/reservations/`                         | Create reservation            |
+| GET    | `/reservations/`                         | Retrieve all reservations     |
+| GET    | `/reservations/active`                   | Retrieve active reservations  |
+| GET    | `/reservations/company/{company_id}`     | Retrieve company reservations |
+| GET    | `/reservations/{reservation_id}`         | Retrieve reservation by ID    |
+| PUT    | `/reservations/{reservation_id}`         | Update reservation            |
+| PATCH  | `/reservations/{reservation_id}/status`  | Toggle reservation status     |
 
 ---
 
