@@ -47,18 +47,19 @@ export default function RegisterCompanyView() {
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} required />
-            <Input label="NIT" name="nit" value={form.nit} onChange={handleChange} required />
-            <Input
-              label="Representante legal"
-              name="representante"
-              value={form.representante}
-              onChange={handleChange}
-              required
-            />
-            <Input label="Dirección" name="direccion" value={form.direccion} onChange={handleChange} />
-            <Input label="Teléfono" name="telefono" value={form.telefono} onChange={handleChange} />
-            <Input label="Correo" name="correo" type="email" value={form.correo} onChange={handleChange} />
+            <Input label="Nombre" id="nombre" name="nombre" value={form.nombre} onChange={handleChange} required />
+<Input label="NIT" id="nit" name="nit" value={form.nit} onChange={handleChange} required />
+<Input
+  label="Representante legal"
+  id="representante"
+  name="representante"
+  value={form.representante}
+  onChange={handleChange}
+  required
+/>
+<Input label="Dirección" id="direccion" name="direccion" value={form.direccion} onChange={handleChange} />
+<Input label="Teléfono" id="telefono" name="telefono" value={form.telefono} onChange={handleChange} />
+<Input label="Correo" id="correo" name="correo" type="email" value={form.correo} onChange={handleChange} />
             {formError && (
               <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                 {formError}
