@@ -6,16 +6,18 @@
 from uuid import UUID
 from decimal import Decimal
 from datetime import date
-from typing import List
+from typing import List, Optional
 
 from fastapi import (
     APIRouter,
     Depends,
+    HTTPException,
     status,
     Form
 )
 
 from sqlalchemy.orm import Session
+from starlette.responses import StreamingResponse
 
 from app.database.sessions import get_db
 
@@ -29,6 +31,27 @@ router = APIRouter(
     prefix="/contracts",
     tags=["Contracts"]
 )
+
+
+def parse_room_ids(room_ids: Optional[List[str]]) -> List[UUID]:
+    parsed_room_ids: List[UUID] = []
+
+    for room_id_value in room_ids or []:
+        for room_id in room_id_value.split(","):
+            room_id = room_id.strip()
+
+            if not room_id:
+                continue
+
+            try:
+                parsed_room_ids.append(UUID(room_id))
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Invalid room_id UUID: {room_id}"
+                )
+
+    return parsed_room_ids
 
 
 # Create a new contract
@@ -50,6 +73,8 @@ def create_contract(
     # Contract negotiated agreements
     terms: str = Form(...),
 
+    room_ids: Optional[List[str]] = Form(None),
+
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
@@ -61,10 +86,62 @@ def create_contract(
         end_date=end_date,
         base_rate=base_rate,
         description=description,
-        terms=terms
+        terms=terms,
+        room_ids=parse_room_ids(room_ids)
     )
 
     return contract_service.create_contract(
+        db,
+        contract_in
+    )
+
+
+@router.post(
+    "/preview/pdf",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "Contract preview PDF",
+            "content": {
+                "application/pdf": {
+                    "schema": {
+                        "type": "string",
+                        "format": "binary"
+                    }
+                }
+            }
+        }
+    }
+)
+def preview_contract_pdf(
+    company_id: UUID = Form(...),
+
+    start_date: date = Form(...),
+    end_date: date = Form(...),
+
+    base_rate: Decimal = Form(...),
+
+    description: str = Form(None),
+
+    terms: str = Form(...),
+
+    room_ids: Optional[List[str]] = Form(None),
+
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+
+    contract_in = contract_scheme.ContractCreate(
+        company_id=company_id,
+        start_date=start_date,
+        end_date=end_date,
+        base_rate=base_rate,
+        description=description,
+        terms=terms,
+        room_ids=parse_room_ids(room_ids)
+    )
+
+    return contract_service.preview_contract_pdf(
         db,
         contract_in
     )
@@ -144,6 +221,8 @@ def update_contract(
 
     is_active: bool = Form(None),
 
+    room_ids: Optional[List[UUID]] = Form(None),
+
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
@@ -155,7 +234,8 @@ def update_contract(
         base_rate=base_rate,
         description=description,
         terms=terms,
-        is_active=is_active
+        is_active=is_active,
+        room_ids=room_ids
     )
 
     return contract_service.update_contract(
@@ -198,6 +278,5 @@ def generate_contract_pdf(
         db,
         contract_id
     )
-
 
 # End file:

@@ -27,6 +27,8 @@ class ContractCreate(BaseModel):
     # Contract legal/business agreements
     terms: str = Field(..., min_length=10, max_length=5000)
 
+    room_ids: list[UUID] = Field(default_factory=list)
+
 
 # Schema for contract updates
 class ContractUpdate(BaseModel):
@@ -40,6 +42,21 @@ class ContractUpdate(BaseModel):
     terms: Optional[str] = Field(None, min_length=10, max_length=5000)
 
     is_active: Optional[bool] = None
+
+    room_ids: Optional[list[UUID]] = None
+
+
+class ContractRoomResponse(BaseModel):
+
+    id: UUID
+    room_number: str
+    description: Optional[str]
+    capacity: int
+    status: str
+    is_active: bool
+
+    class Config:
+        from_attributes = True
 
 
 # Schema for contract API responses
@@ -60,6 +77,8 @@ class ContractResponse(BaseModel):
 
     description: Optional[str]
     terms: str
+
+    rooms: list[ContractRoomResponse] = Field(default_factory=list)
 
     is_active: bool
 

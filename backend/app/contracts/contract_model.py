@@ -89,5 +89,47 @@ class Contract(Base):
         foreign_keys=[company_id]
     )
 
+    # Rooms assigned to this contract through the association table
+    contract_rooms = relationship(
+        "ContractRoom",
+        back_populates="contract",
+        cascade="all, delete-orphan"
+    )
+
+    rooms = relationship(
+        "Room",
+        secondary="contract_rooms",
+        back_populates="contracts",
+        viewonly=True
+    )
+
+
+class ContractRoom(Base):
+    __tablename__ = "contract_rooms"
+
+    contract_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("contracts.id"),
+        primary_key=True
+    )
+
+    room_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("rooms.id"),
+        primary_key=True
+    )
+
+    contract = relationship(
+        "Contract",
+        back_populates="contract_rooms",
+        foreign_keys=[contract_id]
+    )
+
+    room = relationship(
+        "Room",
+        back_populates="contract_rooms",
+        foreign_keys=[room_id]
+    )
+
 
 # End file:

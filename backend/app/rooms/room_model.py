@@ -9,6 +9,7 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Enum
+from sqlalchemy.orm import relationship
 from sqlalchemy.types import Uuid 
 
 from app.database.base import Base
@@ -55,5 +56,17 @@ class Room(Base):
     # Timestam fields
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    contract_rooms = relationship(
+        "ContractRoom",
+        back_populates="room"
+    )
+
+    contracts = relationship(
+        "Contract",
+        secondary="contract_rooms",
+        back_populates="rooms",
+        viewonly=True
+    )
 
 # End file:

@@ -51,7 +51,11 @@ class ContractPDFGenerator:
         self.table_styles = ContractPDFTableStyles()
         self.dimensions = ContractPDFDimensions()
 
-    def generate(self) -> StreamingResponse:
+    def generate(
+        self,
+        content_disposition: str = "attachment",
+        filename: str | None = None
+    ) -> StreamingResponse:
         """
         Genera el PDF del contrato y retorna una respuesta streaming.
         
@@ -77,6 +81,7 @@ class ContractPDFGenerator:
         content.extend(self._build_header())
         content.extend(self._build_company_info())
         content.extend(self._build_contract_details())
+        content.extend(self._build_rooms())
         content.extend(self._build_terms_and_conditions())
         content.extend(self._build_additional_notes())
         content.extend(self._build_signatures())
@@ -86,13 +91,15 @@ class ContractPDFGenerator:
         pdf.build(content)
         pdf_buffer.seek(0)
 
+        pdf_filename = filename or f"contract_{self.contract.contract_number}.pdf"
+
         # Retornar respuesta con streaming
         return StreamingResponse(
             pdf_buffer,
             media_type="application/pdf",
             headers={
                 "Content-Disposition":
-                f"attachment; filename=contract_{self.contract.contract_number}.pdf"
+                f"{content_disposition}; filename={pdf_filename}"
             }
         )
 
@@ -263,6 +270,44 @@ class ContractPDFGenerator:
 
         return content
 
+    def _build_rooms(self) -> list:
+        """
+        Construye la sección con habitaciones asociadas al contrato.
+        
+        Returns:
+            list: Lista de elementos para agregar al PDF
+        """
+        content = []
+
+        if not self.contract.rooms:
+            return content
+
+        content.append(
+            Paragraph("<b>3. HABITACIONES ASOCIADAS</b>", self.styles.get_heading_style())
+        )
+
+        room_data = [[
+            Paragraph("<b>Número</b>", self.styles.get_label_style()),
+            Paragraph("<b>Capacidad</b>", self.styles.get_label_style()),
+            Paragraph("<b>Estado</b>", self.styles.get_label_style()),
+            Paragraph("<b>Descripción</b>", self.styles.get_label_style()),
+        ]]
+
+        for room in self.contract.rooms:
+            room_data.append([
+                Paragraph(room.room_number, self.styles.get_normal_style()),
+                Paragraph(str(room.capacity), self.styles.get_normal_style()),
+                Paragraph(str(room.status.value), self.styles.get_normal_style()),
+                Paragraph(room.description or "No especificada", self.styles.get_normal_style()),
+            ])
+
+        room_table = Table(room_data, colWidths=[1.2*inch, 1.1*inch, 1.5*inch, 3.2*inch])
+        room_table.setStyle(TableStyle(self.table_styles.get_data_table_style()))
+        content.append(room_table)
+        content.append(Spacer(1, self.dimensions.SPACE_MEDIUM*inch))
+
+        return content
+
     def _build_terms_and_conditions(self) -> list:
         """
         Construye la sección con términos y condiciones del contrato.
@@ -274,7 +319,7 @@ class ContractPDFGenerator:
 
         # Título de sección
         content.append(
-            Paragraph("<b>3. TÉRMINOS Y CONDICIONES</b>", self.styles.get_heading_style())
+            Paragraph("<b>4. TÉRMINOS Y CONDICIONES</b>", self.styles.get_heading_style())
         )
 
         # Mostrar términos o texto por defecto
@@ -308,7 +353,7 @@ class ContractPDFGenerator:
 
         if self.contract.description and self.contract.description.strip():
             content.append(
-                Paragraph("<b>4. NOTAS ADICIONALES</b>", self.styles.get_heading_style())
+                Paragraph("<b>5. NOTAS ADICIONALES</b>", self.styles.get_heading_style())
             )
             description_text = self.contract.description.replace("\n", "<br/>&nbsp;&nbsp;&nbsp;")
             content.append(
@@ -336,7 +381,7 @@ class ContractPDFGenerator:
 
         # Título de sección
         content.append(
-            Paragraph("<b>5. FIRMAS DE ACEPTACIÓN</b>", self.styles.get_heading_style())
+            Paragraph("<b>6. FIRMAS DE ACEPTACIÓN</b>", self.styles.get_heading_style())
         )
         content.append(Spacer(1, self.dimensions.SPACE_MEDIUM*inch))
 
@@ -454,6 +499,20 @@ def generate_contract_pdf(
     # Crear generador y obtener PDF
     generator = ContractPDFGenerator(contract, company)
     return generator.generate()
+
+
+def generate_contract_preview_pdf(
+    contract,
+    company,
+) -> StreamingResponse:
+    """
+    Genera un PDF de vista previa sin consultar ni persistir un contrato.
+    """
+    generator = ContractPDFGenerator(contract, company)
+    return generator.generate(
+        content_disposition="inline",
+        filename='"contract_preview.pdf"'
+    )
 
 
 # End file:

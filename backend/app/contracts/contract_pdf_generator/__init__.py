@@ -11,10 +11,11 @@ Structure:
 - contract_pdf.py: Specialized PDF generator for contracts
 """
 
-from .contract_pdf import generate_contract_pdf
+from .contract_pdf import generate_contract_pdf, generate_contract_preview_pdf
 
 __all__ = [
     "generate_contract_pdf",
+    "generate_contract_preview_pdf",
 ]
 
 # End file:

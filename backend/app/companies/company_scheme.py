@@ -15,7 +15,8 @@ class CompanyCreate(BaseModel):
 
     nit: str = Field(..., min_length=5, max_length=30)
     
-    company_representative: str = Field(..., min_length=5, max_length=30)
+    company_representative: str = Field(..., min_length=2, max_length=100)
+    
     address: Optional[str] = Field(None, max_length=250)
     phone: Optional[str] = Field(None, max_length=20)
     email: Optional[EmailStr] = Field(None, max_length=150)
