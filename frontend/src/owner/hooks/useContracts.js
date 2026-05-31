@@ -38,33 +38,9 @@ export function useContracts() {
     }
   };
 
-  const handleSelectCompany = async (company) => {
-    try {
-      // Verificar si hay habitaciones disponibles
-      const rooms = await getAllRooms();
-      const activeContracts = await getActiveContracts();
-      
-      // Obtener IDs de habitaciones ocupadas en contratos activos
-      const occupiedRoomIds = activeContracts.flatMap(contract => 
-        contract.rooms ? contract.rooms.map(room => room.id) : []
-      );
-      
-      // Filtrar habitaciones disponibles (no ocupadas en contratos activos y con estado AVAILABLE)
-      const availableRooms = rooms.filter(room => 
-        !occupiedRoomIds.includes(room.id) && room.status === "AVAILABLE"
-      );
-      
-      if (availableRooms.length === 0) {
-        alert("No se pueden crear contratos: No hay habitaciones disponibles en este momento.");
-        return; // No mostrar el formulario
-      }
-      
-      setSelectedCompany(company);
-      setShowContractForm(true);
-    } catch (err) {
-      console.error("Error al verificar habitaciones disponibles:", err);
-      alert("Error al verificar disponibilidad de habitaciones. Por favor, intente nuevamente.");
-    }
+  const handleSelectCompany = (company) => {
+    setSelectedCompany(company);
+    setShowContractForm(true);
   };
 
   const handleBack = () => {
