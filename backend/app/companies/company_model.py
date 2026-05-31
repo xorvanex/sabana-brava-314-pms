@@ -65,5 +65,11 @@ class Company(Base):
         "Reservation",
         back_populates="company",
     )
+    
+    # A company can have multiple employeds(GUESTS) associate
+    guests = relationship(
+        "Guest",
+        back_populates="company"
+    )
 
 # End file:

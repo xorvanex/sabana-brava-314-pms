@@ -220,4 +220,79 @@ def toggle_reservation_status(
         reservation_id
     )
 
+
+# Check-in: Mark reservation as CHECKED_IN (sets rooms to OCCUPIED)
+@router.patch(
+    "/{reservation_id}/check-in",
+    response_model=reservation_scheme.ReservationResponse
+)
+def check_in_reservation(
+    reservation_id: UUID,
+
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    from app.reservations.reservation_scheme import ReservationUpdate
+    
+    # Directly set status to CHECKED_IN
+    reservation_in = ReservationUpdate(
+        status=ReservationStatusEnum.CHECKED_IN
+    )
+
+    return reservation_service.update_reservation(
+        db,
+        reservation_id,
+        reservation_in
+    )
+
+
+# Check-out: Mark reservation as COMPLETED (sets rooms to AVAILABLE)
+@router.patch(
+    "/{reservation_id}/check-out",
+    response_model=reservation_scheme.ReservationResponse
+)
+def check_out_reservation(
+    reservation_id: UUID,
+
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    from app.reservations.reservation_scheme import ReservationUpdate
+    
+    # Directly set status to COMPLETED
+    reservation_in = ReservationUpdate(
+        status=ReservationStatusEnum.COMPLETED
+    )
+
+    return reservation_service.update_reservation(
+        db,
+        reservation_id,
+        reservation_in
+    )
+
+
+# Mark as NO_SHOW
+@router.patch(
+    "/{reservation_id}/no-show",
+    response_model=reservation_scheme.ReservationResponse
+)
+def mark_no_show(
+    reservation_id: UUID,
+
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    from app.reservations.reservation_scheme import ReservationUpdate
+    
+    reservation_in = ReservationUpdate(
+        status=ReservationStatusEnum.NO_SHOW
+    )
+
+    return reservation_service.update_reservation(
+        db,
+        reservation_id,
+        reservation_in
+    )
+
+
 # End file:

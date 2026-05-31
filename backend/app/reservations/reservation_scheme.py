@@ -35,9 +35,11 @@ class ReservationUpdate(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 
-    guest_count: Optional[int] = Field(None, gt=0)
+    # Agrega "default=" explícitamente aquí
+    guest_count: Optional[int] = Field(default=None, gt=0) 
     status: Optional[ReservationStatusEnum] = None
-    notes: Optional[str] = Field(None, max_length=5000)
+    # Agrega "default=" explícitamente aquí
+    notes: Optional[str] = Field(default=None, max_length=5000) 
 
     room_ids: Optional[list[UUID]] = None
 
@@ -90,5 +92,6 @@ class ReservationResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 # End file:

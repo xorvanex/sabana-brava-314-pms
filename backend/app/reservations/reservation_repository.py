@@ -229,4 +229,44 @@ def get_contract_by_id(
         .first()
     )
 
+
+# Get all room IDs associated with a reservation
+def get_reservation_room_ids(
+    db: Session,
+    reservation_id: UUID
+) -> list[UUID]:
+
+    reservation_rooms = (
+        db.query(ReservationRoom)
+        .filter(ReservationRoom.reservation_id == reservation_id)
+        .all()
+    )
+
+    return [cast(UUID, rr.room_id) for rr in reservation_rooms]
+
+
+# Check if rooms are occupied by other active reservations
+def are_rooms_occupied_by_others(
+    db: Session,
+    room_ids: list[UUID],
+    exclude_reservation_id: UUID | None = None
+) -> bool:
+    if not room_ids:
+        return False
+
+    query = (
+        db.query(Reservation)
+        .join(ReservationRoom)
+        .filter(
+            ReservationRoom.room_id.in_(room_ids),
+            Reservation.status.in_(BLOCKING_STATUSES)
+        )
+    )
+
+    if exclude_reservation_id:
+        query = query.filter(Reservation.id != exclude_reservation_id)
+
+    return query.first() is not None
+
+
 # End file:
