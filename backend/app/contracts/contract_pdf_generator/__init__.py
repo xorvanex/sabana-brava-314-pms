@@ -1,5 +1,7 @@
 # File path: backend/app/contracts/contract_pdf_generator/__init__.py
 
+# Start file:
+
 """
 PDF Generation Module for Contracts
 
