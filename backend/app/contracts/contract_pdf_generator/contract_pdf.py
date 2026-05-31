@@ -1,8 +1,8 @@
 # File path: backend/app/contracts/contract_pdf_generator/contract_pdf.py
 
 """
-Módulo especializado en la generación de PDFs para contratos.
-Maneja toda la lógica de renderizado de contratos en formato PDF.
+Specialized module for generating PDFs for contracts.
+It handles all the logic for rendering contracts in PDF format.
 """
 
 from datetime import datetime
@@ -32,17 +32,17 @@ from .contract_pdf_styles import (
 
 class ContractPDFGenerator:
     """
-    Clase responsable de la generación de PDFs para contratos.
-    Encapsula toda la lógica de rendering y estructura del documento.
+    Class responsible for generating PDFs for contracts.
+It encapsulates all the rendering logic and document structure.
     """
 
     def __init__(self, contract, company):
         """
-        Inicializa el generador con datos del contrato y empresa.
+        Initialize the generator with contract and company data.
         
         Args:
-            contract: Objeto del contrato de la base de datos
-            company: Objeto de la empresa asociada al contrato
+            contract: Subject of the database contract
+            company: Purpose of the company associated with the contract
         """
         self.contract = contract
         self.company = company
@@ -57,10 +57,10 @@ class ContractPDFGenerator:
         filename: str | None = None
     ) -> StreamingResponse:
         """
-        Genera el PDF del contrato y retorna una respuesta streaming.
+        Generates the PDF of the contract and returns a streaming response.
         
         Returns:
-            StreamingResponse: PDF listo para descargar
+            StreamingResponse: PDF ready for download
         """
         # Crear buffer en memoria para el PDF
         pdf_buffer = BytesIO()
@@ -105,11 +105,11 @@ class ContractPDFGenerator:
 
     def _build_header(self) -> list:
         """
-        Construye la sección de encabezado del contrato.
-        Incluye nombre del hotel, tipo de documento e información general.
+        Create the contract header section.
+        Include the hotel name, document type, and general information.
         
         Returns:
-            list: Lista de elementos para agregar al PDF
+            list: List of items to add to the PDF
         """
         content = []
 
@@ -155,7 +155,7 @@ class ContractPDFGenerator:
 
     def _build_company_info(self) -> list:
         """
-        Construye la sección con información de la empresa cliente.
+        Build the section with information from the client company.
         
         Returns:
             list: Lista de elementos para agregar al PDF
@@ -215,11 +215,11 @@ class ContractPDFGenerator:
 
     def _build_contract_details(self) -> list:
         """
-        Construye la sección con detalles del contrato.
-        Incluye fechas, tarifas y duración.
+        Create the section with contract details.
+Include dates, rates, and duration.
         
         Returns:
-            list: Lista de elementos para agregar al PDF
+            list: List of items to add to the PDF
         """
         content = []
 
@@ -272,10 +272,10 @@ class ContractPDFGenerator:
 
     def _build_rooms(self) -> list:
         """
-        Construye la sección con habitaciones asociadas al contrato.
+        Build the section with rooms associated with the contract.
         
         Returns:
-            list: Lista de elementos para agregar al PDF
+            list: List of items to add to the PDF
         """
         content = []
 
@@ -310,10 +310,10 @@ class ContractPDFGenerator:
 
     def _build_terms_and_conditions(self) -> list:
         """
-        Construye la sección con términos y condiciones del contrato.
+        Build the section with the terms and conditions of the contract.
         
         Returns:
-            list: Lista de elementos para agregar al PDF
+            list: List of items to add to the PDF
         """
         content = []
 
@@ -343,11 +343,11 @@ class ContractPDFGenerator:
 
     def _build_additional_notes(self) -> list:
         """
-        Construye la sección con notas adicionales del contrato.
-        Solo se muestra si hay contenido.
+        Build the section with additional contract notes.
+It will only be displayed if there is content.
         
         Returns:
-            list: Lista de elementos para agregar al PDF
+            list: List of items to add to the PDF
         """
         content = []
 
@@ -368,11 +368,11 @@ class ContractPDFGenerator:
 
     def _build_signatures(self) -> list:
         """
-        Construye la sección de firmas del contrato.
-        Incluye espacios para firmas de ambas partes.
+        Create the signature section of the contract.
+        Include spaces for both parties' signatures.
         
         Returns:
-            list: Lista de elementos para agregar al PDF
+            list: List of items to add to the PDF
         """
         content = []
 
@@ -433,11 +433,11 @@ class ContractPDFGenerator:
 
     def _build_footer(self) -> list:
         """
-        Construye el pie de página del contrato.
-        Incluye información legal y de generación.
+        Create the contract footer.
+    Include legal and generation information.
         
         Returns:
-            list: Lista de elementos para agregar al PDF
+            list: List of items to add to the PDF
         """
         content = []
 
@@ -468,21 +468,21 @@ def generate_contract_pdf(
     contract_repository,
 ) -> StreamingResponse:
     """
-    Función pública para generar PDF de un contrato.
+    Public function to generate a PDF of a contract.
     
-    Esta función sirve como punto de entrada desde el servicio de contratos.
-    Valida que el contrato exista y delega la generación al generador especializado.
+    This function serves as an entry point from the contracts service.
+    Verify that the contract exists and delegate the generation to the specialized generator.
     
     Args:
-        db: Sesión de base de datos
-        contract_id: ID del contrato a generar
-        contract_repository: Repositorio de contratos para consultar BD
+        db: Database session
+        contract_id: ID of the contract to be generated
+        contract_repository: Contract repository for database consultation
         
     Returns:
-        StreamingResponse: PDF del contrato listo para descargar
+        StreamingResponse: PDF of the contract ready for download
         
     Raises:
-        HTTPException: Si el contrato no existe
+        HTTPException: If the contract does not exist
     """
     # Validar existencia del contrato
     contract = contract_repository.get_contract_by_id(db, contract_id)
@@ -506,7 +506,7 @@ def generate_contract_preview_pdf(
     company,
 ) -> StreamingResponse:
     """
-    Genera un PDF de vista previa sin consultar ni persistir un contrato.
+    Generate a preview PDF without consulting or persisting a contract.
     """
     generator = ContractPDFGenerator(contract, company)
     return generator.generate(
