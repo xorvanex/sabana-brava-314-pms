@@ -28,8 +28,10 @@ from app.database.base import Base
 class ReservationStatusEnum(str, enum.Enum):
     PENDING = "PENDING"
     CONFIRMED = "CONFIRMED"
+    CHECKED_IN = "CHECKED_IN"
     CANCELLED = "CANCELLED"
     COMPLETED = "COMPLETED"
+    NO_SHOW = "NO SHOW"
 
 BLOCKING_STATUSES = {ReservationStatusEnum.PENDING, ReservationStatusEnum.CONFIRMED}
 

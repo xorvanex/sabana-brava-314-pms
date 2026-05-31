@@ -6,7 +6,7 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from app.rooms.room_model import Room
+from app.rooms.room_model import Room, RoomStatusEnum
 
 # Create a new room
 def create_room(db: Session, room_data: dict):
@@ -62,5 +62,16 @@ def delete_room(db: Session, room: Room):
     db.refresh(room)
     
     return room
+
+
+# Update room status
+def update_room_status(db: Session, room: Room, new_status: RoomStatusEnum):
+    setattr(room, "status", new_status)
+    
+    db.commit()
+    db.refresh(room)
+    
+    return room
+
 
 # End file:

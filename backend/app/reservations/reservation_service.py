@@ -17,6 +17,58 @@ from . import (
 from app.companies import company_repository
 
 from app.reservations.reservation_model import ReservationStatusEnum, BLOCKING_STATUSES
+from app.rooms.room_model import RoomStatusEnum
+from app.rooms import room_repository
+
+
+# Statuses that mark rooms as occupied
+OCCUPYING_STATUSES = {
+    ReservationStatusEnum.PENDING,
+    ReservationStatusEnum.CONFIRMED,
+    ReservationStatusEnum.CHECKED_IN
+}
+
+# Statuses that release rooms (make them available again)
+RELEASING_STATUSES = {
+    ReservationStatusEnum.COMPLETED,
+    ReservationStatusEnum.CANCELLED,
+    ReservationStatusEnum.NO_SHOW
+}
+
+
+def sync_room_status_on_check_in(db: Session, room_ids: list[UUID]) -> None:
+    """Set rooms to OCCUPIED when check-in occurs."""
+    for room_id in room_ids:
+        room = room_repository.get_room_by_id(db, room_id)
+        if room:
+            room_repository.update_room_status(db, room, RoomStatusEnum.OCCUPIED)
+
+
+def sync_room_status_on_check_out(db: Session, room_ids: list[UUID], exclude_reservation_id: UUID | None = None) -> None:
+    """Set rooms to AVAILABLE when check-out occurs, if not occupied by other reservations."""
+    for room_id in room_ids:
+        room = room_repository.get_room_by_id(db, room_id)
+        if room and bool(room.status == RoomStatusEnum.OCCUPIED):
+            # Check if room is occupied by another active reservation
+            if not reservation_repository.are_rooms_occupied_by_others(
+                db,
+                [room_id],
+                exclude_reservation_id=exclude_reservation_id
+            ):
+                room_repository.update_room_status(db, room, RoomStatusEnum.AVAILABLE)
+
+
+def sync_room_status_on_cancel(db: Session, room_ids: list[UUID], exclude_reservation_id: UUID | None = None) -> None:
+    """Set rooms to AVAILABLE when reservation is cancelled/no-show, if not occupied by other reservations."""
+    for room_id in room_ids:
+        room = room_repository.get_room_by_id(db, room_id)
+        if room and bool(room.status == RoomStatusEnum.OCCUPIED):
+            if not reservation_repository.are_rooms_occupied_by_others(
+                db,
+                [room_id],
+                exclude_reservation_id=exclude_reservation_id
+            ):
+                room_repository.update_room_status(db, room, RoomStatusEnum.AVAILABLE)
 
 
 def validate_reservation_rooms(
@@ -234,6 +286,12 @@ def update_reservation(
             detail="Reservation not found"
         )
 
+    # Get current room IDs before update
+    previous_room_ids = [
+        cast(UUID, rr.room_id)
+        for rr in reservation.reservation_rooms
+    ]
+
     new_start_date = cast(
         date,
         reservation_in.start_date or reservation.start_date
@@ -285,12 +343,33 @@ def update_reservation(
             exclude_reservation_id=reservation_id
         )
 
-    return reservation_repository.update_reservation(
+    # Update the reservation
+    updated_reservation = reservation_repository.update_reservation(
         db,
         reservation_id,
         update_data,
         room_ids
     )
+
+    # Sync room status based on status changes
+    if final_status in OCCUPYING_STATUSES:
+        # If going to CHECKED_IN, set rooms to OCCUPIED
+        if final_status == ReservationStatusEnum.CHECKED_IN:
+            rooms_to_update = room_ids or previous_room_ids
+            if rooms_to_update:
+                sync_room_status_on_check_in(db, rooms_to_update)
+    elif final_status == ReservationStatusEnum.COMPLETED:
+        # If completed (check-out), set rooms to AVAILABLE
+        rooms_to_release = room_ids or previous_room_ids
+        if rooms_to_release:
+            sync_room_status_on_check_out(db, rooms_to_release, exclude_reservation_id=reservation_id)
+    elif final_status in RELEASING_STATUSES:
+        # If cancelled/no-show, set rooms to AVAILABLE if not occupied by others
+        rooms_to_release = room_ids or previous_room_ids
+        if rooms_to_release:
+            sync_room_status_on_cancel(db, rooms_to_release, exclude_reservation_id=reservation_id)
+
+    return updated_reservation
 
 
 def toggle_reservation_status(
@@ -307,6 +386,12 @@ def toggle_reservation_status(
             status_code=404,
             detail="Reservation not found"
         )
+
+    # Get room IDs before update
+    room_ids = [
+        cast(UUID, reservation_room.room_id)
+        for reservation_room in reservation.reservation_rooms
+    ]
 
     current_status = reservation.status
     
@@ -327,19 +412,24 @@ def toggle_reservation_status(
         validate_reservation_rooms(
             db,
             cast(UUID, reservation.contract_id),
-            [
-                cast(UUID, reservation_room.room_id)
-                for reservation_room in reservation.reservation_rooms
-            ],
+            room_ids,
             cast(date, reservation.start_date),
             cast(date, reservation.end_date),
             exclude_reservation_id=reservation_id
         )
 
-    return reservation_repository.update_reservation(
+    # Update the reservation
+    updated_reservation = reservation_repository.update_reservation(
         db,
         reservation_id,
         {"status": new_status}
     )
+
+    # Sync room status when toggling to cancelling (CANCELLED)
+    if new_status == ReservationStatusEnum.CANCELLED and room_ids:
+        sync_room_status_on_cancel(db, room_ids, exclude_reservation_id=reservation_id)
+
+    return updated_reservation
+
 
 # End file:
