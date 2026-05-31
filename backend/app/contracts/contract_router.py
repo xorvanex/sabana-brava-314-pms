@@ -1,6 +1,5 @@
 # File path: backend/app/contracts/contract_router.py
 
-
 # Start file:
 
 from uuid import UUID

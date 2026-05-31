@@ -1,6 +1,5 @@
 # File path: backend/app/companies/company_service.py
 
-
 # Start file:
 
 from uuid import UUID
@@ -142,6 +141,5 @@ def toggle_company_status(
         company_id,
         {"is_active": new_status}
     )
-
 
 # End file:

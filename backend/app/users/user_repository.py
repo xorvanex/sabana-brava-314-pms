@@ -1,6 +1,5 @@
 # File path: backend/app/users/user_repository.py
 
-
 # Start file:
 
 from sqlalchemy.orm import Session
@@ -46,6 +45,5 @@ def update_user(db: Session, user_id: UUID, user_data: dict) -> User | None:
         db.commit()
         db.refresh(user)
     return user
-
 
 # End file:

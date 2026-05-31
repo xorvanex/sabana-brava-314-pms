@@ -1,5 +1,4 @@
-# File path: bakend/app/rooms/room_repository.py
-
+# File path: backend/app/rooms/room_repository.py
 
 # Start file:
 

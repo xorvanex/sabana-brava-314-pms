@@ -1,12 +1,12 @@
 # File path: backend/app/database/sessions.py
 
+# Start file:
+
 # Database Session Layer:
 # - Creates database sessions
 # - Manages session lifecycle
 # - Provides dependency injection
 # - Ensures session cleanup
-
-# Start file:
 
 from sqlalchemy.orm import sessionmaker
 from .connection import engine
@@ -27,6 +27,5 @@ def get_db():
         yield db
     finally:
         db.close()
-
 
 # End file:

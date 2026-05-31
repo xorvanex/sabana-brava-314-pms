@@ -1,6 +1,5 @@
 # File path: backend/app/rooms/room_router.py
 
-
 # Start file:
 
 import uuid
@@ -51,7 +50,7 @@ def create_room(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-    # Reconstruimos el esquema Pydantic a partir de los datos del formulario
+    # Build the Pydantic schema from form data
     room_data = RoomCreate(
         room_number=room_number,
         description=description,
@@ -102,7 +101,7 @@ def update_room(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-    # Construimos el esquema con los valores opcionales
+    # Build the update schema with optional values
     room_data = RoomUpdate(
         room_number=room_number,
         description=description,

@@ -1,6 +1,5 @@
 # File path: backend/app/companies/company_router.py
 
-
 # Start file:
 
 from uuid import UUID
@@ -169,6 +168,5 @@ def toggle_company_status(
         db,
         company_id
     )
-
 
 # End file:

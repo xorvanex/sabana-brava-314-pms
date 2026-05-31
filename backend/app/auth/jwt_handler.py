@@ -1,12 +1,12 @@
 # File path: backend/app/auth/jwt_handler.py
 
+# Start file:
+
 # Authentication Layer:
 # - Generates JWT access tokens
 # - Validates authentication tokens
 # - Handles token expiration
 # - Provides request authentication
-
-# Start file:
 
 from datetime import datetime, timedelta, timezone
 import jwt
@@ -50,6 +50,5 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
         raise HTTPException(status_code=401, detail="Token has expired")
     except InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
-
 
 # End file:

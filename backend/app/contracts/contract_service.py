@@ -1,5 +1,6 @@
 # File path: backend/app/contracts/contract_service.py
 
+# Start file:
 
 from datetime import date, datetime
 from types import SimpleNamespace
@@ -87,7 +88,7 @@ def create_contract(
     db: Session,
     contract_in: contract_scheme.ContractCreate
 ) -> dict:
-    # Validar existencia de la empresa
+    # Validate company existence
     company = company_repository.get_company_by_id(
         db,
         contract_in.company_id
@@ -99,21 +100,21 @@ def create_contract(
             detail="Company not found"
         )
     
-    # Validar que la empresa esté activa
+    # Validate company status
     if not bool(company.is_active):
         raise HTTPException(
             status_code=400,
             detail="Company is inactive"
         )
     
-    # Validar rango de fechas
+    # Validate date range
     if contract_in.end_date <= contract_in.start_date:
         raise HTTPException(
             status_code=400,
             detail="Contract end date must be greater than start date"
         )
 
-    # Validar que no haya contratos superpuestos
+    # Validate contract date overlap
     if contract_repository.check_overlapping_contracts(
         db,
         contract_in.company_id,
@@ -125,7 +126,7 @@ def create_contract(
             detail="Company already has an active contract with overlapping dates"
         )
 
-    # Generar número único de contrato
+    # Generate unique contract number
     contract_number = generate_contract_number(db)
 
     validate_contract_rooms(
@@ -133,11 +134,11 @@ def create_contract(
         contract_in.room_ids
     )
     
-    # Preparar datos para guardar
+    # Prepare data for persistence
     contract_data = contract_in.model_dump(exclude={"room_ids"})
     contract_data["contract_number"] = contract_number
     
-    # Guardar en base de datos
+    # Persist contract data
     return contract_repository.create_contract(
         db,
         contract_data,
@@ -245,7 +246,7 @@ def update_contract(
     contract_id: UUID,
     contract_in: contract_scheme.ContractUpdate
 ) -> dict:
-    # Obtener contrato existente
+    # Get existing contract
     contract = contract_repository.get_contract_by_id(
         db,
         contract_id
@@ -257,7 +258,7 @@ def update_contract(
             detail="Contract not found"
         )
 
-    # Resolver fechas finales (usar nuevas o mantener las existentes)
+    # Resolve final dates from update data
     new_start_date = cast(
         date,
         contract_in.start_date or contract.start_date
@@ -268,14 +269,14 @@ def update_contract(
         contract_in.end_date or contract.end_date
     )
 
-    # Validar rango de fechas
+    # Validate date range
     if new_end_date <= new_start_date:
         raise HTTPException(
             status_code=400,
             detail="Invalid contract date range"
         )
     
-    # Validar que no haya conflictos con otros contratos
+    # Validate conflicts with other contracts
     if contract_repository.check_overlapping_contracts(
         db,
         cast(UUID, contract.company_id),
@@ -288,7 +289,7 @@ def update_contract(
             detail="Updated contract dates overlap with existing contract"
         )
     
-    # Preparar datos para actualizar
+    # Prepare update data
     room_ids = contract_in.room_ids
     update_data = contract_in.model_dump(
         exclude={"room_ids"},
@@ -335,7 +336,7 @@ def toggle_contract_status(
             detail="Contract not found"
         )
 
-    # Invertir estado actual
+    # Toggle current status
     new_status = not bool(contract.is_active)
 
     if new_status:
@@ -375,6 +376,5 @@ def generate_contract_pdf(
         contract_id,
         contract_repository
     )
-
 
 # End file:

@@ -1,12 +1,12 @@
 # File path: backend/app/auth/dependencies.py
 
+# Start file:
+
 # Authorization Layer:
 # - Handles role-based access control
 # - Validates user permissions
 # - Restricts protected endpoints
 # - Uses JWT payload dependencies
-
-# Start file:
 
 from fastapi import Depends, HTTPException, status
 from app.auth.jwt_handler import verify_token
@@ -25,6 +25,5 @@ def require_admin_or_owner(payload: dict = Depends(verify_token)) -> dict:
         )
 
     return payload
-
 
 # End file:

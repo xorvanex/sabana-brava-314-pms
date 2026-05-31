@@ -1,9 +1,11 @@
 # File path: backend/app/contracts/contract_pdf_generator/contract_pdf_styles.py
 
+# Start file:
+
 """
-Módulo de estilos para generación de PDFs de contratos.
-Centraliza todos los estilos y colores para mantener consistencia visual
-en los documentos PDF generados para contratos.
+Style module for contract PDF generation.
+Centralizes styles and colors to keep visual consistency
+across generated contract PDF documents.
 """
 
 from reportlab.lib.styles import getSampleStyleSheet
@@ -12,13 +14,13 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
 
 
 class ContractPDFStyles:
-    """Clase que contiene todos los estilos reutilizables para PDFs de contratos"""
+    """Reusable text styles for contract PDFs"""
     
     @staticmethod
     def get_title_style():
         """
-        Estilo para el título principal del documento
-        Retorna el estilo para encabezados principales
+        Main document title style
+        Returns the style used by primary headings
         """
         style = getSampleStyleSheet()["Heading1"]
         style.fontSize = 16
@@ -31,8 +33,8 @@ class ContractPDFStyles:
     @staticmethod
     def get_subtitle_style():
         """
-        Estilo para subtítulos
-        Usado para tipos de documentos o subtítulos principales
+        Subtitle style
+        Used for document types and primary subtitles
         """
         style = getSampleStyleSheet()["Heading2"]
         style.fontSize = 12
@@ -45,8 +47,8 @@ class ContractPDFStyles:
     @staticmethod
     def get_heading_style():
         """
-        Estilo para títulos de sección
-        Usado para títulos numerados (1. Información, 2. Detalles, etc.)
+        Section heading style
+        Used for numbered headings such as 1. Information or 2. Details
         """
         style = getSampleStyleSheet()["Heading3"]
         style.fontSize = 11
@@ -59,8 +61,8 @@ class ContractPDFStyles:
     @staticmethod
     def get_normal_style():
         """
-        Estilo para texto del cuerpo/contenido normal
-        Usado para párrafos regulares y contenido descriptivo
+        Body content style
+        Used for regular paragraphs and descriptive content
         """
         style = getSampleStyleSheet()["BodyText"]
         style.fontSize = 10
@@ -72,8 +74,8 @@ class ContractPDFStyles:
     @staticmethod
     def get_label_style():
         """
-        Estilo para etiquetas en tablas
-        Usado para identificadores de campos en tablas
+        Table label style
+        Used for field labels inside tables
         """
         style = getSampleStyleSheet()["Normal"]
         style.fontSize = 10
@@ -84,8 +86,8 @@ class ContractPDFStyles:
     @staticmethod
     def get_footer_style():
         """
-        Estilo para pie de página/footer
-        Usado para información secundaria al final del documento
+        Footer text style
+        Used for secondary information at the end of the document
         """
         style = getSampleStyleSheet()["Normal"]
         style.fontSize = 7.5
@@ -96,8 +98,8 @@ class ContractPDFStyles:
     @staticmethod
     def get_small_text_style():
         """
-        Estilo para texto pequeño
-        Usado en notas y referencias
+        Small text style
+        Used in notes and references
         """
         style = getSampleStyleSheet()["Normal"]
         style.fontSize = 8.5
@@ -106,25 +108,25 @@ class ContractPDFStyles:
 
 
 class ContractPDFColors:
-    """Clase que contiene todas las paletas de color para PDFs de contratos"""
+    """Color palette for contract PDFs"""
     
-    PRIMARY_DARK = colors.HexColor("#1a1a1a")        # Negro profundo
-    SECONDARY_DARK = colors.HexColor("#2c3e50")      # Azul-gris oscuro
-    BORDER_COLOR = colors.HexColor("#34495e")        # Azul-gris
-    LIGHT_GRAY = colors.HexColor("#f8f9fa")          # Gris muy claro (filas)
-    MEDIUM_GRAY = colors.HexColor("#bdc3c7")         # Gris medio
-    HEADER_BG = colors.HexColor("#ecf0f1")           # Gris claro (encabezados)
-    FOOTER_COLOR = colors.HexColor("#7f8c8d")        # Gris oscuro
+    PRIMARY_DARK = colors.HexColor("#1a1a1a")        # Deep black
+    SECONDARY_DARK = colors.HexColor("#2c3e50")      # Dark blue-gray
+    BORDER_COLOR = colors.HexColor("#34495e")        # Blue-gray
+    LIGHT_GRAY = colors.HexColor("#f8f9fa")          # Very light gray for rows
+    MEDIUM_GRAY = colors.HexColor("#bdc3c7")         # Medium gray
+    HEADER_BG = colors.HexColor("#ecf0f1")           # Light gray for headers
+    FOOTER_COLOR = colors.HexColor("#7f8c8d")        # Dark gray
     WHITE = colors.white
     BLACK = colors.black
 
 
 class ContractPDFTableStyles:
-    """Clase que contiene estilos reutilizables para tablas de contratos"""
+    """Reusable table styles for contract PDFs"""
     
     @staticmethod
     def get_header_table_style():
-        """Estilo para tabla de encabezado (número, fecha, estado)"""
+        """Header table style for number, date, and status"""
         return [
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -138,7 +140,7 @@ class ContractPDFTableStyles:
 
     @staticmethod
     def get_data_table_style():
-        """Estilo para tablas de datos (información, detalles)"""
+        """Data table style for information and details"""
         return [
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -156,7 +158,7 @@ class ContractPDFTableStyles:
 
     @staticmethod
     def get_signature_table_style():
-        """Estilo para tabla de firmas"""
+        """Signature table style"""
         return [
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('ALIGN', (1, 0), (1, -1), 'CENTER'),
@@ -168,22 +170,21 @@ class ContractPDFTableStyles:
 
 
 class ContractPDFDimensions:
-    """Clase que contiene dimensiones estándar para PDFs de contratos"""
+    """Standard dimensions for contract PDFs"""
     
-    # Márgenes estándar
-    MARGIN = 0.75  # en inches
+    # Standard margins
+    MARGIN = 0.75  # Inches
     
-    # Espacios verticales
-    SPACE_SMALL = 0.15  # Espacios pequeños
-    SPACE_MEDIUM = 0.2  # Espacios medianos
-    SPACE_LARGE = 0.25  # Espacios grandes
-    SPACE_XLARGE = 0.3  # Espacios muy grandes
+    # Vertical spacing
+    SPACE_SMALL = 0.15  # Small spacing
+    SPACE_MEDIUM = 0.2  # Medium spacing
+    SPACE_LARGE = 0.25  # Large spacing
+    SPACE_XLARGE = 0.3  # Extra-large spacing
     
-    # Anchos de columna para tablas
-    FULL_WIDTH = 7.0  # Ancho total disponible
+    # Table column widths
+    FULL_WIDTH = 7.0  # Available full width
     HALF_WIDTH = 3.5
     THIRD_WIDTH = 2.33
     QUARTER_WIDTH = 1.75
-
 
 # End file:

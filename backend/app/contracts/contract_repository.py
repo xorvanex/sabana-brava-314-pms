@@ -1,6 +1,5 @@
 # File path: backend/app/contracts/contract_repository.py
 
-
 # Start file:
 
 from datetime import date

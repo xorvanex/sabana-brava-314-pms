@@ -1,6 +1,5 @@
 # File path: backend/app/users/user_model.py
 
-
 # Start file:
 
 import uuid
@@ -43,6 +42,5 @@ class User(Base):
 
     # Account status flag
     is_active = Column(Boolean, default=True)
-
 
 # End file:

@@ -1,6 +1,4 @@
-
 # File path: backend/app/users/user_service.py
-
 
 # Start file:
 
@@ -90,6 +88,5 @@ def authenticate_user(db: Session, email: str, password: str):
             "role": user.role.value
         }
     }
-
 
 # End file:

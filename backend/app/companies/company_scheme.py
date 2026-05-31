@@ -1,6 +1,5 @@
 # File path: backend/app/companies/company_scheme.py
 
-
 # Start file:
 
 from uuid import UUID
@@ -63,6 +62,5 @@ class CompanyResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 # End file:

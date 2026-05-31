@@ -1,6 +1,5 @@
 # File path: backend/app/users/user_router.py
 
-
 # Start file:
 
 from fastapi import APIRouter, Depends, status, Form, HTTPException
@@ -117,6 +116,5 @@ def get_all_users(
     token_payload: dict = Depends(require_admin_or_owner)
 ):
     return user_repository.get_all_users(db)
-
 
 # End file:

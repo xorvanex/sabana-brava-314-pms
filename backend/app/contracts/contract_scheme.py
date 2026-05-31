@@ -1,6 +1,5 @@
 # File path: backend/app/contracts/contract_scheme.py
 
-
 # Start file:
 
 from uuid import UUID
@@ -84,6 +83,5 @@ class ContractResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 # End file:

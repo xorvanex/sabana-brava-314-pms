@@ -1,6 +1,5 @@
 # File path: backend/app/users/user_scheme.py
 
-
 # Start file:
 
 from pydantic import BaseModel, EmailStr, Field
@@ -41,6 +40,5 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 # End file:

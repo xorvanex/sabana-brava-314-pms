@@ -1,6 +1,5 @@
 # File path: backend/app/rooms/room_scheme.py
 
-
 # Start file:
 
 import uuid

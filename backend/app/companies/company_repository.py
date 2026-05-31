@@ -1,6 +1,5 @@
 # File path: backend/app/companies/company_repository.py
 
-
 # Start file:
 
 from uuid import UUID
@@ -56,6 +55,5 @@ def update_company(
         db.refresh(company)
 
     return company
-
 
 # End file:
