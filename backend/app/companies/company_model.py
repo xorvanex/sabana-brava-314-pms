@@ -1,6 +1,5 @@
 # File path: backend/app/companies/company_model.py
 
-
 # Start file:
 
 import uuid
@@ -60,5 +59,11 @@ class Company(Base):
         back_populates="company",
     )
 
+    # One-to-many relationship:
+    # A company can have multiple reservations associated
+    reservations = relationship(
+        "Reservation",
+        back_populates="company",
+    )
 
 # End file:

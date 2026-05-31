@@ -1,5 +1,4 @@
-# File path: bakend/app/rooms/room_model.py
-
+# File path: backend/app/rooms/room_model.py
 
 # Start file:
 
@@ -65,6 +64,18 @@ class Room(Base):
     contracts = relationship(
         "Contract",
         secondary="contract_rooms",
+        back_populates="rooms",
+        viewonly=True
+    )
+
+    reservation_rooms = relationship(
+        "ReservationRoom",
+        back_populates="room"
+    )
+
+    reservations = relationship(
+        "Reservation",
+        secondary="reservation_rooms",
         back_populates="rooms",
         viewonly=True
     )

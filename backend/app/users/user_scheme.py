@@ -5,14 +5,8 @@
 from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
 from typing import Optional
-from enum import Enum
 
-
-# Role schema enumeration (API layer validation)
-class UserRoleEnum(str, Enum):
-    OWNER = "OWNER"
-    ADMINISTRATOR = "ADMINISTRATOR"
-    RECEPTIONIST = "RECEPTIONIST"
+from app.users.user_model import UserRoleEnum
 
 
 # Schema for creating a receptionist user

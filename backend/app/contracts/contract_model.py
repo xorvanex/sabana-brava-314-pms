@@ -1,6 +1,5 @@
 # File path: backend/app/contracts/contract_model.py
 
-
 # Start file:
 
 import uuid
@@ -103,6 +102,12 @@ class Contract(Base):
         viewonly=True
     )
 
+    # Reservations associated to this contract
+    reservations = relationship(
+        "Reservation",
+        back_populates="contract"
+    )
+
 
 class ContractRoom(Base):
     __tablename__ = "contract_rooms"
@@ -130,6 +135,5 @@ class ContractRoom(Base):
         back_populates="contract_rooms",
         foreign_keys=[room_id]
     )
-
 
 # End file:
