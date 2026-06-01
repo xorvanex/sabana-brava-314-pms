@@ -3,6 +3,7 @@
 # Start file:
 
 from datetime import date
+from typing import cast
 
 from uuid import UUID
 
@@ -112,7 +113,7 @@ def create_contract(
 
     db.commit()
 
-    return get_contract_by_id(db, new_contract.id)
+    return get_contract_by_id(db, cast(UUID, new_contract.id))
 
 
 # Update existing contract
@@ -150,17 +151,6 @@ def update_contract(
         contract = get_contract_by_id(db, contract_id)
 
     return contract
-
-
-# Retrieve the last contract
-def get_last_contract(db: Session):
-
-    return (
-        db.query(Contract)
-        .order_by(desc(Contract.created_at))
-        .first()
-    )
-
 
 def check_overlapping_contracts(
     db: Session,
