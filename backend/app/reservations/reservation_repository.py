@@ -8,7 +8,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, joinedload
 
-from .reservation_model import Reservation, ReservationRoom
+from .reservation_model import Reservation, ReservationRoom, RoomAssignment
 from app.contracts.contract_model import Contract, ContractRoom
 from app.rooms.room_model import Room
 
@@ -371,6 +371,100 @@ def count_reservation_guests(
         db.query(ReservationGuest)
         .filter(ReservationGuest.reservation_id == reservation_id)
         .count()
+    )
+
+
+# =========================================================
+# ROOM ASSIGNMENT REPOSITORY FUNCTIONS
+# =========================================================
+
+def create_room_assignment(
+    db: Session,
+    reservation_id: UUID,
+    room_id: UUID,
+    guest_id: UUID,
+    assigned_by: UUID | None = None
+) -> RoomAssignment:
+    assignment = RoomAssignment(
+        reservation_id=reservation_id,
+        room_id=room_id,
+        guest_id=guest_id,
+        assigned_by=assigned_by
+    )
+
+    db.add(assignment)
+    db.commit()
+    db.refresh(assignment)
+
+    return assignment
+
+
+def get_reservation_room_assignments(
+    db: Session,
+    reservation_id: UUID
+) -> list[RoomAssignment]:
+    return (
+        db.query(RoomAssignment)
+        .filter(RoomAssignment.reservation_id == reservation_id)
+        .all()
+    )
+
+
+def get_guest_room_assignment(
+    db: Session,
+    reservation_id: UUID,
+    guest_id: UUID
+) -> RoomAssignment | None:
+    return (
+        db.query(RoomAssignment)
+        .filter(
+            RoomAssignment.reservation_id == reservation_id,
+            RoomAssignment.guest_id == guest_id
+        )
+        .first()
+    )
+
+
+def get_room_assignment_count_by_room(
+    db: Session,
+    room_id: UUID
+) -> int:
+    return (
+        db.query(RoomAssignment)
+        .filter(RoomAssignment.room_id == room_id)
+        .count()
+    )
+
+
+def delete_room_assignment(
+    db: Session,
+    reservation_id: UUID,
+    guest_id: UUID
+) -> RoomAssignment | None:
+    assignment = (
+        db.query(RoomAssignment)
+        .filter(
+            RoomAssignment.reservation_id == reservation_id,
+            RoomAssignment.guest_id == guest_id
+        )
+        .first()
+    )
+
+    if assignment:
+        db.delete(assignment)
+        db.commit()
+
+    return assignment
+
+
+def get_room_by_id(
+    db: Session,
+    room_id: UUID
+) -> Room | None:
+    return (
+        db.query(Room)
+        .filter(Room.id == room_id)
+        .first()
     )
 
 

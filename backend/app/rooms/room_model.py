@@ -9,7 +9,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Enum
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Uuid 
+from sqlalchemy.types import Uuid
 
 from app.database.base import Base
 
@@ -24,7 +24,7 @@ class RoomStatusEnum(str, enum.Enum):
 # Rooms ORM model definition
 class Room(Base):
     __tablename__ = "rooms"
-    
+
     # Primary key UUID
     id = Column(
         Uuid(as_uuid=True),
@@ -32,27 +32,27 @@ class Room(Base):
         default=uuid.uuid4,
         index=True
     )
-    
+
     # Room number identifier
     room_number = Column(String(20), unique=True, nullable=False, index=True)
-    
+
     # Room Description
     description = Column(String(500), nullable=True)
-    
+
     # Room capacity
     capacity = Column(Integer, nullable=False, default=2)
-    
+
     # Current Room state
     status = Column(
         Enum(RoomStatusEnum, name="room_status_enum", create_type=False),
         nullable=False,
         default=RoomStatusEnum.AVAILABLE
     )
-    
+
     # Room Status Flag
     is_active = Column(Boolean, default=True, nullable=False)
-    
-    # Timestam fields
+
+    # Timestamp fields
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -78,6 +78,12 @@ class Room(Base):
         secondary="reservation_rooms",
         back_populates="rooms",
         viewonly=True
+    )
+
+    room_assignments = relationship(
+        "RoomAssignment",
+        back_populates="room",
+        cascade="all, delete-orphan"
     )
 
 # End file:

@@ -629,4 +629,188 @@ def get_reservation_guests(
         reservation_id
     )
 
+
+# =========================================================
+# ROOM ASSIGNMENT SERVICE FUNCTIONS
+# =========================================================
+
+# Statuses NOT allowed for room assignments
+BLOCKED_FOR_ASSIGNMENTS = {
+    ReservationStatusEnum.CANCELLED,
+    ReservationStatusEnum.COMPLETED,
+    ReservationStatusEnum.NO_SHOW
+}
+
+# Statuses allowed for room assignments
+ALLOWED_FOR_ASSIGNMENTS = {
+    ReservationStatusEnum.PENDING,
+    ReservationStatusEnum.CONFIRMED,
+    ReservationStatusEnum.CHECKED_IN
+}
+
+
+def get_reservation_room_assignments(
+    db: Session,
+    reservation_id: UUID
+) -> list:
+    reservation = reservation_repository.get_reservation_by_id(
+        db,
+        reservation_id
+    )
+
+    if reservation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Reservation not found"
+        )
+
+    return reservation_repository.get_reservation_room_assignments(
+        db,
+        reservation_id
+    )
+
+
+def create_room_assignment(
+    db: Session,
+    reservation_id: UUID,
+    room_id: UUID,
+    guest_id: UUID,
+    assigned_by: UUID | None = None
+) -> dict:
+    # Validation 1: Reservation must exist
+    reservation = reservation_repository.get_reservation_by_id(
+        db,
+        reservation_id
+    )
+
+    if reservation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Reservation not found"
+        )
+
+    # Validation 4: Check reservation status (not CANCELLED, COMPLETED, NO_SHOW)
+    current_status = cast(ReservationStatusEnum, reservation.status)
+    if current_status in BLOCKED_FOR_ASSIGNMENTS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot assign rooms to a reservation with status '{current_status.value}'"
+        )
+
+    # Validation 2: Guest must be assigned to the reservation
+    guest_assignment = reservation_repository.reservation_guest_exists(
+        db,
+        reservation_id,
+        guest_id
+    )
+
+    if not guest_assignment:
+        raise HTTPException(
+            status_code=400,
+            detail="Guest is not assigned to reservation"
+        )
+
+# Validation 3: Room must be assigned to the reservation
+    reservation_room_ids = [
+        cast(UUID, rr.room_id)
+        for rr in reservation.reservation_rooms
+    ]
+
+    if room_id not in reservation_room_ids:
+        raise HTTPException(
+            status_code=400,
+            detail="Room is not assigned to reservation"
+        )
+
+    # Validation 5: No duplicate assignments
+    existing_assignment = reservation_repository.get_guest_room_assignment(
+        db,
+        reservation_id,
+        guest_id
+    )
+
+    if existing_assignment:
+        raise HTTPException(
+            status_code=400,
+            detail="Guest already assigned to a room"
+        )
+
+    # Validation 6: Check room capacity
+    room = reservation_repository.get_room_by_id(
+        db,
+        room_id
+    )
+
+    if room is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Room not found"
+        )
+
+    # Bug #1 Fix: Validate room is active
+    if not bool(room.is_active):
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot assign guests to inactive rooms"
+        )
+
+    current_assignments = reservation_repository.get_room_assignment_count_by_room(
+        db,
+        room_id
+    )
+
+    room_capacity = cast(int, room.capacity)
+    if current_assignments >= room_capacity:
+        raise HTTPException(
+            status_code=400,
+            detail="Room capacity exceeded"
+        )
+
+    # Create the assignment
+    assignment = reservation_repository.create_room_assignment(
+        db,
+        reservation_id,
+        room_id,
+        guest_id,
+        assigned_by
+    )
+
+    return assignment
+
+
+def delete_room_assignment(
+    db: Session,
+    reservation_id: UUID,
+    guest_id: UUID
+) -> dict:
+    # Validate reservation exists
+    reservation = reservation_repository.get_reservation_by_id(
+        db,
+        reservation_id
+    )
+
+    if reservation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Reservation not found"
+        )
+
+    # Delete the assignment
+    assignment = reservation_repository.delete_room_assignment(
+        db,
+        reservation_id,
+        guest_id
+    )
+
+    if assignment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Room assignment not found"
+        )
+
+    return {
+        "message": "Room assignment deleted successfully"
+    }
+
+
 # End file:

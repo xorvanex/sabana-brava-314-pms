@@ -3,7 +3,7 @@
 # Start file:
 
 from uuid import UUID
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -36,10 +36,10 @@ class ReservationUpdate(BaseModel):
     end_date: Optional[date] = None
 
     # Agrega "default=" explícitamente aquí
-    guest_count: Optional[int] = Field(default=None, gt=0) 
+    guest_count: Optional[int] = Field(default=None, gt=0)
     status: Optional[ReservationStatusEnum] = None
     # Agrega "default=" explícitamente aquí
-    notes: Optional[str] = Field(default=None, max_length=5000) 
+    notes: Optional[str] = Field(default=None, max_length=5000)
 
     room_ids: Optional[list[UUID]] = None
 
@@ -116,6 +116,28 @@ class ReservationResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+# =========================================================
+# SCHEMAS: Room Assignment
+# =========================================================
+
+class RoomAssignmentCreate(BaseModel):
+    guest_id: UUID
+    room_id: UUID
+
+
+class RoomAssignmentResponse(BaseModel):
+    id: UUID
+    reservation_id: UUID
+    room_id: UUID
+    room_number: str
+    guest_id: UUID
+    guest_name: str
+    assigned_by: Optional[UUID] = None
+    assignment_date: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 
 # End file:

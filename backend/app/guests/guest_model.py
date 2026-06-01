@@ -146,6 +146,12 @@ class Guest(Base):
         viewonly=True
     )
 
+    room_assignments = relationship(
+        "RoomAssignment",
+        back_populates="guest",
+        cascade="all, delete-orphan"
+    )
+
 
 # =========================================================
 # MODEL: ReservationGuest
@@ -157,7 +163,7 @@ class ReservationGuest(Base):
     __table_args__ = (
         UniqueConstraint('reservation_id', 'guest_id', name='uq_reservation_guest'),
     )
-    
+
     # Primary key UUID
     id = Column(
         Uuid(as_uuid=True),

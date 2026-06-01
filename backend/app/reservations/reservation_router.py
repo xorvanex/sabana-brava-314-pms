@@ -376,4 +376,73 @@ def remove_guest_from_reservation(
     )
 
 
+# =========================================================
+# ROOM ASSIGNMENT ENDPOINTS
+# =========================================================
+
+# Get all room assignments for a reservation
+@router.get(
+    "/{reservation_id}/room-assignments",
+    response_model=List[reservation_scheme.RoomAssignmentResponse]
+)
+def get_reservation_room_assignments(
+    reservation_id: UUID,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return reservation_service.get_reservation_room_assignments(
+        db,
+        reservation_id
+    )
+
+
+# Create a room assignment (assign a guest to a room)
+@router.post(
+    "/{reservation_id}/room-assignments",
+    response_model=reservation_scheme.RoomAssignmentResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def create_room_assignment(
+    reservation_id: UUID,
+    assignment_data: reservation_scheme.RoomAssignmentCreate,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    # Get user ID from token for assigned_by field
+    user_id = token_payload.get("sub")
+    assigned_by = None
+
+    if user_id:
+        try:
+            assigned_by = UUID(str(user_id))
+        except ValueError:
+            pass
+
+    return reservation_service.create_room_assignment(
+        db,
+        reservation_id,
+        assignment_data.room_id,
+        assignment_data.guest_id,
+        assigned_by
+    )
+
+
+# Remove a room assignment (unassign a guest from a room)
+@router.delete(
+    "/{reservation_id}/room-assignments/{guest_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_room_assignment(
+    reservation_id: UUID,
+    guest_id: UUID,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return reservation_service.delete_room_assignment(
+        db,
+        reservation_id,
+        guest_id
+    )
+
+
 # End file:

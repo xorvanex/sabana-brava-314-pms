@@ -148,7 +148,7 @@ class Reservation(Base):
         back_populates="reservations",
         viewonly=True
     )
-    
+
     reservation_guests = relationship(
         "ReservationGuest",
         back_populates="reservation",
@@ -161,6 +161,14 @@ class Reservation(Base):
         back_populates="reservations",
         viewonly=True
     )
+
+    # Room assignments for this reservation
+    room_assignments = relationship(
+        "RoomAssignment",
+        back_populates="reservation",
+        cascade="all, delete-orphan"
+    )
+
 
 # Reference to the reservation_rooms table that exists in the
 # relationship between reservations and rooms
@@ -205,6 +213,78 @@ class ReservationRoom(Base):
         "Room",
         back_populates="reservation_rooms",
         foreign_keys=[room_id]
+    )
+
+
+# RoomAssignment: tracks which guest occupies which room in a reservation
+class RoomAssignment(Base):
+    __tablename__ = "room_assignments"
+
+    id = Column(
+        Uuid(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        index=True
+    )
+
+    reservation_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("reservations.id"),
+        nullable=False
+    )
+
+    room_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("rooms.id"),
+        nullable=False
+    )
+
+    guest_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("guests.id"),
+        nullable=False
+    )
+
+    assigned_by = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=True
+    )
+
+    assignment_date = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=True
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        default=datetime.utcnow,
+        nullable=True
+    )
+
+    # Relationships
+    reservation = relationship(
+        "Reservation",
+        back_populates="room_assignments",
+        foreign_keys=[reservation_id]
+    )
+
+    room = relationship(
+        "Room",
+        back_populates="room_assignments",
+        foreign_keys=[room_id]
+    )
+
+    guest = relationship(
+        "Guest",
+        back_populates="room_assignments",
+        foreign_keys=[guest_id]
+    )
+
+    user = relationship(
+        "User",
+        foreign_keys=[assigned_by]
     )
 
 # End file:
