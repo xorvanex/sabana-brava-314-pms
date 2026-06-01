@@ -177,7 +177,7 @@ def update_reservation(
     end_date: date = Form(None),
 
     guest_count: int = Form(None),
-    status_value: ReservationStatusEnum = Form(ReservationStatusEnum.PENDING, alias="status"),
+    status_value: Optional[ReservationStatusEnum] = Form(None, alias="status"),
     notes: str = Form(None),
 
     room_ids: Optional[List[str]] = Form(None),
@@ -218,6 +218,30 @@ def toggle_reservation_status(
     return reservation_service.toggle_reservation_status(
         db,
         reservation_id
+    )
+
+
+# Confirm: PENDING → CONFIRMED
+@router.patch(
+    "/{reservation_id}/confirm",
+    response_model=reservation_scheme.ReservationResponse
+)
+def confirm_reservation(
+    reservation_id: UUID,
+
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    from app.reservations.reservation_scheme import ReservationUpdate
+
+    reservation_in = ReservationUpdate(
+        status=ReservationStatusEnum.CONFIRMED
+    )
+
+    return reservation_service.update_reservation(
+        db,
+        reservation_id,
+        reservation_in
     )
 
 

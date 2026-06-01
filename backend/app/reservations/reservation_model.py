@@ -31,9 +31,19 @@ class ReservationStatusEnum(str, enum.Enum):
     CHECKED_IN = "CHECKED_IN"
     CANCELLED = "CANCELLED"
     COMPLETED = "COMPLETED"
-    NO_SHOW = "NO SHOW"
+    NO_SHOW = "NO_SHOW"
 
 BLOCKING_STATUSES = {ReservationStatusEnum.PENDING, ReservationStatusEnum.CONFIRMED}
+
+# Allowed status transitions for reservation state machine
+VALID_TRANSITIONS: dict[ReservationStatusEnum, set[ReservationStatusEnum]] = {
+    ReservationStatusEnum.PENDING:    {ReservationStatusEnum.CONFIRMED, ReservationStatusEnum.CANCELLED, ReservationStatusEnum.NO_SHOW},
+    ReservationStatusEnum.CONFIRMED:  {ReservationStatusEnum.CHECKED_IN, ReservationStatusEnum.CANCELLED, ReservationStatusEnum.NO_SHOW},
+    ReservationStatusEnum.CHECKED_IN: {ReservationStatusEnum.COMPLETED},
+    ReservationStatusEnum.COMPLETED:  set(),
+    ReservationStatusEnum.CANCELLED:  set(),
+    ReservationStatusEnum.NO_SHOW:    set(),
+}
 
 # Reservation ORM model definition
 class Reservation(Base):

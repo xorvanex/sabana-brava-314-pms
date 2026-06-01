@@ -38,13 +38,27 @@ def get_my_profile(db: Session, user_id: str):
     return user
 
 
+# Update authenticated user's own name and phone
+def update_my_profile(db: Session, user_id: str, profile_in: user_scheme.UserProfileUpdate):
+    user = user_repository.get_user_by_id(db, UUID(user_id))
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    update_data = profile_in.model_dump(exclude_unset=True, exclude_none=True)
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields provided to update")
+
+    return user_repository.update_user(db, UUID(user_id), update_data)
+
+
 # Update current user password after verification
 def update_my_password(db: Session, user_id: str, old_password: str, new_password: str):
     user = user_repository.get_user_by_id(db, UUID(user_id))  
     if not user or not verify_password(old_password, str(user.password_hash)):  
         raise HTTPException(status_code=400, detail="Incorrect current password")
 
-    user_data = {"password": hash_password(new_password)}
+    user_data = {"password_hash": hash_password(new_password)}
     return user_repository.update_user(db, UUID(user_id), user_data)  
 
 

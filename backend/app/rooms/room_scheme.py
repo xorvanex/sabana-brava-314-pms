@@ -39,6 +39,7 @@ class RoomStatusUpdate(BaseModel):
 # Schema for API responses
 class RoomResponse(RoomBase):
     id: uuid.UUID
+    capacity: int
     status: RoomStatusEnum
     is_active: bool
     created_at: datetime

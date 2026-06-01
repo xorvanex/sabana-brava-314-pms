@@ -80,6 +80,26 @@ def get_me(
     return user_service.get_my_profile(db, str(user_id))
 
 
+# Update current authenticated user profile (name and phone)
+@router.put("/me", response_model=user_scheme.UserResponse)
+def update_me(
+    name: str = Form(None),
+    phone: str = Form(None),
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(verify_token)
+):
+    user_id = token_payload.get("sub")
+
+    if not user_id:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token: user not identified"
+        )
+
+    profile_in = user_scheme.UserProfileUpdate(name=name, phone=phone)
+    return user_service.update_my_profile(db, str(user_id), profile_in)
+
+
 # Update current user password
 @router.put("/me/password")
 def change_password(
@@ -107,6 +127,16 @@ def toggle_user_status(
     token_payload: dict = Depends(require_admin_or_owner)
 ):
     return user_service.toggle_user_status(db, user_id)
+
+
+# Retrieve a specific user by ID (admin/owner only)
+@router.get("/{user_id}", response_model=user_scheme.UserResponse)
+def get_user_by_id(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return user_service.get_my_profile(db, str(user_id))
 
 
 # Retrieve all users (admin/owner only)

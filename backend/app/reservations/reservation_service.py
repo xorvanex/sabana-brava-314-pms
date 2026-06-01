@@ -16,7 +16,7 @@ from . import (
 
 from app.companies import company_repository
 
-from app.reservations.reservation_model import ReservationStatusEnum, BLOCKING_STATUSES
+from app.reservations.reservation_model import ReservationStatusEnum, BLOCKING_STATUSES, VALID_TRANSITIONS
 from app.rooms.room_model import RoomStatusEnum
 from app.rooms import room_repository
 
@@ -69,6 +69,20 @@ def sync_room_status_on_cancel(db: Session, room_ids: list[UUID], exclude_reserv
                 exclude_reservation_id=exclude_reservation_id
             ):
                 room_repository.update_room_status(db, room, RoomStatusEnum.AVAILABLE)
+
+
+
+def validate_status_transition(current: ReservationStatusEnum, new: ReservationStatusEnum) -> None:
+    """Raise HTTPException if the status transition is not allowed."""
+    allowed = VALID_TRANSITIONS.get(current, set())
+    if new not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Cannot transition reservation from '{current.value}' to '{new.value}'. "
+                f"Allowed transitions: {[s.value for s in allowed] or 'none'}"
+            )
+        )
 
 
 def validate_reservation_rooms(
@@ -314,7 +328,19 @@ def update_reservation(
         exclude_none=True
     )
 
-    final_status = update_data.get("status", reservation.status)
+    current_status = cast(ReservationStatusEnum, reservation.status)
+    final_status = update_data.get("status", current_status)
+
+    # Validate state machine transition when status changes
+    if "status" in update_data:
+        if final_status == current_status:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Reservation is already in status '{final_status.value}'"
+            )
+        validate_status_transition(current_status, final_status)
+
+
     final_blocks_availability = final_status in BLOCKING_STATUSES   
 
     if final_blocks_availability:
@@ -393,12 +419,15 @@ def toggle_reservation_status(
         for reservation_room in reservation.reservation_rooms
     ]
 
-    current_status = reservation.status
-    
+    current_status = cast(ReservationStatusEnum, reservation.status)
+
     if current_status in BLOCKING_STATUSES:
         new_status = ReservationStatusEnum.CANCELLED
     else:
         new_status = ReservationStatusEnum.PENDING
+
+    # Enforce state machine: raises 400 if transition is not allowed
+    validate_status_transition(current_status, new_status)
 
     if new_status in BLOCKING_STATUSES:
         validate_reservation_contract(

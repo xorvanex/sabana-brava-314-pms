@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.database.sessions import get_db
 
 from app.auth.dependencies import require_admin_or_owner
+from app.auth.jwt_handler import verify_token
 
 from app.rooms.room_scheme import (
     RoomCreate,
@@ -65,7 +66,8 @@ def create_room(
     response_model=list[RoomResponse]
 )
 def get_all_rooms(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(verify_token)
 ):
     return get_all_rooms_service(db)
 
@@ -77,7 +79,8 @@ def get_all_rooms(
 )
 def get_room_by_id(
     room_id: uuid.UUID,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(verify_token)
 ):
     return get_room_by_id_service(
         db,

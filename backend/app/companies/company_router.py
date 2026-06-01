@@ -139,7 +139,7 @@ def update_company(
         name=name,
         nit=nit,
         company_representative=company_representative,
-        addres=address,
+        address=address,
         phone=phone,
         email=email,
         is_active=is_active

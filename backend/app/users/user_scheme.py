@@ -23,6 +23,12 @@ class UserLogin(BaseModel):
     password_hash: str
 
 
+# Schema for updating the authenticated user's own profile
+class UserProfileUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
+
+
 # Schema for user API responses
 class UserResponse(BaseModel):
     id: UUID

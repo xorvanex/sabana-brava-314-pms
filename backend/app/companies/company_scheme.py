@@ -29,7 +29,7 @@ class CompanyUpdate(BaseModel):
     
     company_representative: Optional[str ]= Field(None, max_length=150)
     
-    addres: Optional[str] = Field(None, max_length=250)
+    address: Optional[str] = Field(None, max_length=250)
     phone: Optional[str] = Field(None, max_length=20)
     email: Optional[EmailStr] = Field(None, max_length=150)
 
