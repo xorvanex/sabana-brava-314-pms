@@ -43,10 +43,10 @@ class Company(Base):
     is_active = Column(Boolean, default=True)
 
     # Audit timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=True)
 
     updated_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
         nullable=True
@@ -69,7 +69,8 @@ class Company(Base):
     # A company can have multiple employeds(GUESTS) associate
     guests = relationship(
         "Guest",
-        back_populates="company"
+        back_populates="company",
+        cascade="all, delete-orphan"
     )
 
 # End file:

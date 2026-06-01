@@ -69,15 +69,36 @@ class ReservationRoomResponse(BaseModel):
         from_attributes = True
 
 
+# =========================================================
+# SCHEMAS: Reservation Guest Assignment
+# =========================================================
+
+class ReservationGuestAssign(BaseModel):
+    guest_ids: list[UUID] = Field(default_factory=list)
+
+
+class ReservationGuestResponse(BaseModel):
+    id: UUID
+
+    first_name: str
+    last_name: str
+
+    document_type: str
+    document_number: str
+
+    gender: str
+    phone: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 # Schema for reservation API responses
 class ReservationResponse(BaseModel):
 
     id: UUID
 
-    # Nested company information
     company: CompanyBasicResponse
 
-    # Nested contract information
     contract: ReservationContractResponse
 
     start_date: date
@@ -90,8 +111,11 @@ class ReservationResponse(BaseModel):
 
     rooms: list[ReservationRoomResponse] = Field(default_factory=list)
 
+    guests: list[ReservationGuestResponse] = Field(default_factory=list)
+
     class Config:
         from_attributes = True
+
 
 
 # End file:

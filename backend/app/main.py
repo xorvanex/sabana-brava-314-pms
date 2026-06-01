@@ -15,6 +15,8 @@ from app.companies.company_router import router as company_router
 from app.contracts.contract_router import router as contract_router
 from app.rooms.room_router import router as room_router
 from app.reservations.reservation_router import router as reservation_router
+from app.guests.guest_router import router as guest_router
+
 # FastAPI application initialization
 app = FastAPI(title="Hotel Sabana Brava 314")
 
@@ -33,6 +35,7 @@ app.include_router(company_router)
 app.include_router(contract_router)
 app.include_router(room_router)
 app.include_router(reservation_router)
+app.include_router(guest_router)
 
 # Health check endpoint
 @app.get("/")

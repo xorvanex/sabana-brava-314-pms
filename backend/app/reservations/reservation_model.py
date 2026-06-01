@@ -138,6 +138,19 @@ class Reservation(Base):
         back_populates="reservations",
         viewonly=True
     )
+    
+    reservation_guests = relationship(
+        "ReservationGuest",
+        back_populates="reservation",
+        cascade="all, delete-orphan"
+    )
+
+    guests = relationship(
+        "Guest",
+        secondary="reservation_guests",
+        back_populates="reservations",
+        viewonly=True
+    )
 
 # Reference to the reservation_rooms table that exists in the
 # relationship between reservations and rooms
