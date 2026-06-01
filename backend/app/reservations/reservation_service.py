@@ -20,15 +20,15 @@ from app.reservations.reservation_model import ReservationStatusEnum, BLOCKING_S
 from app.rooms.room_model import RoomStatusEnum
 from app.rooms import room_repository
 
+from app.guests import guest_repository
 
-# Statuses that mark rooms as occupied
+
 OCCUPYING_STATUSES = {
     ReservationStatusEnum.PENDING,
     ReservationStatusEnum.CONFIRMED,
     ReservationStatusEnum.CHECKED_IN
 }
 
-# Statuses that release rooms (make them available again)
 RELEASING_STATUSES = {
     ReservationStatusEnum.COMPLETED,
     ReservationStatusEnum.CANCELLED,
@@ -431,5 +431,173 @@ def toggle_reservation_status(
 
     return updated_reservation
 
+def calculate_reservation_capacity(
+    reservation
+) -> int:
+    return sum(
+        room.capacity
+        for room in reservation.rooms
+    )
+
+
+def assign_guests_to_reservation(
+    db: Session,
+    reservation_id: UUID,
+    guest_ids: list[UUID]
+) -> list:
+    reservation = reservation_repository.get_reservation_by_id(
+        db,
+        reservation_id
+    )
+
+    if reservation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Reservation not found"
+        )
+
+    if not guest_ids:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one guest is required"
+        )
+
+    current_guest_count = len(
+        reservation_repository.get_reservation_guests(
+            db,
+            reservation_id
+        )
+    )
+
+    reservation_capacity = calculate_reservation_capacity(
+        reservation
+    )
+
+    if current_guest_count + len(guest_ids) > reservation_capacity:
+        raise HTTPException(
+            status_code=400,
+            detail="Guest capacity exceeded"
+        )
+
+    # Validate guest_count limit from reservation
+    if current_guest_count + len(guest_ids) > cast(int, reservation.guest_count):
+        raise HTTPException(
+            status_code=400,
+            detail="Guest count exceeds reservation limit"
+        )
+
+    for guest_id in guest_ids:
+
+        guest = guest_repository.get_guest_by_id(
+            db,
+            guest_id
+        )
+
+        if guest is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Guest {guest_id} not found"
+            )
+
+        if cast(UUID, guest.company_id) != cast(UUID, reservation.company_id):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Guest {guest.first_name} {guest.last_name} "
+                    "does not belong to the reservation company"
+                )
+            )
+
+        existing_assignment = (
+            reservation_repository.reservation_guest_exists(
+                db,
+                reservation_id,
+                guest_id
+            )
+        )
+
+        if existing_assignment:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Guest {guest.first_name} {guest.last_name} is already assigned"
+            )
+
+    reservation_repository.assign_guests_to_reservation(
+        db,
+        reservation_id,
+        guest_ids
+    )
+
+    return reservation_repository.get_reservation_guests(
+        db,
+        reservation_id
+    )
+
+
+def remove_guest_from_reservation(
+    db: Session,
+    reservation_id: UUID,
+    guest_id: UUID
+) -> dict:
+    reservation = reservation_repository.get_reservation_by_id(
+        db,
+        reservation_id
+    )
+
+    if reservation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Reservation not found"
+        )
+
+    guest = guest_repository.get_guest_by_id(
+        db,
+        guest_id
+    )
+
+    if guest is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Guest not found"
+        )
+
+    assignment = (
+        reservation_repository.remove_guest_from_reservation(
+            db,
+            reservation_id,
+            guest_id
+        )
+    )
+
+    if assignment is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Guest is not assigned to this reservation"
+        )
+
+    return {
+        "message": "Guest removed from reservation successfully"
+    }
+
+
+def get_reservation_guests(
+    db: Session,
+    reservation_id: UUID
+) -> list:
+    reservation = reservation_repository.get_reservation_by_id(
+        db,
+        reservation_id
+    )
+
+    if reservation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Reservation not found"
+        )
+
+    return reservation_repository.get_reservation_guests(
+        db,
+        reservation_id
+    )
 
 # End file:

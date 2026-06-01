@@ -295,4 +295,61 @@ def mark_no_show(
     )
 
 
+# =========================================================
+# GUEST MANAGEMENT ENDPOINTS
+# =========================================================
+
+# Get all guests assigned to a reservation
+@router.get(
+    "/{reservation_id}/guests",
+    response_model=List[reservation_scheme.ReservationGuestResponse]
+)
+def get_reservation_guests(
+    reservation_id: UUID,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return reservation_service.get_reservation_guests(
+        db,
+        reservation_id
+    )
+
+
+# Assign guests to a reservation
+@router.post(
+    "/{reservation_id}/guests",
+    response_model=List[reservation_scheme.ReservationGuestResponse],
+    status_code=status.HTTP_201_CREATED
+)
+def assign_guests_to_reservation(
+    reservation_id: UUID,
+    guest_assign: reservation_scheme.ReservationGuestAssign,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return reservation_service.assign_guests_to_reservation(
+        db,
+        reservation_id,
+        guest_assign.guest_ids
+    )
+
+
+# Remove a guest from a reservation
+@router.delete(
+    "/{reservation_id}/guests/{guest_id}",
+    status_code=status.HTTP_204_NO_CONTENT
+)
+def remove_guest_from_reservation(
+    reservation_id: UUID,
+    guest_id: UUID,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+    return reservation_service.remove_guest_from_reservation(
+        db,
+        reservation_id,
+        guest_id
+    )
+
+
 # End file:

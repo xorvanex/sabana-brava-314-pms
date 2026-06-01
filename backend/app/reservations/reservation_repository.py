@@ -12,7 +12,9 @@ from .reservation_model import Reservation, ReservationRoom
 from app.contracts.contract_model import Contract, ContractRoom
 from app.rooms.room_model import Room
 
-from app.reservations.reservation_model import ReservationStatusEnum, BLOCKING_STATUSES
+from app.reservations.reservation_model import BLOCKING_STATUSES
+
+from app.guests.guest_model import Guest, ReservationGuest
 
 
 # Retrieve reservation by ID
@@ -27,7 +29,9 @@ def get_reservation_by_id(
             joinedload(Reservation.company),
             joinedload(Reservation.contract),
             joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
-            joinedload(Reservation.rooms)
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
         )
         .filter(Reservation.id == reservation_id)
         .first()
@@ -43,7 +47,9 @@ def get_all_reservations(db: Session):
             joinedload(Reservation.company),
             joinedload(Reservation.contract),
             joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
-            joinedload(Reservation.rooms)
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
         )
         .all()
     )
@@ -54,12 +60,14 @@ def get_active_reservations(db: Session):
 
     return (
         db.query(Reservation)
-        .filter(Reservation.status.in_(ReservationStatusEnum))
+        .filter(Reservation.status.in_(BLOCKING_STATUSES))
         .options(
             joinedload(Reservation.company),
             joinedload(Reservation.contract),
             joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
-            joinedload(Reservation.rooms)
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
         )
         .all()
     )
@@ -78,7 +86,9 @@ def get_company_reservations(
             joinedload(Reservation.company),
             joinedload(Reservation.contract),
             joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
-            joinedload(Reservation.rooms)
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
         )
         .all()
     )
@@ -267,6 +277,101 @@ def are_rooms_occupied_by_others(
         query = query.filter(Reservation.id != exclude_reservation_id)
 
     return query.first() is not None
+
+def get_reservation_guests(
+    db: Session,
+    reservation_id: UUID
+):
+    return (
+        db.query(Guest)
+        .join(
+            ReservationGuest,
+            ReservationGuest.guest_id == Guest.id
+        )
+        .filter(
+            ReservationGuest.reservation_id == reservation_id
+        )
+        .all()
+    )
+
+def get_guest_by_id(
+    db: Session,
+    guest_id: UUID
+):
+    return (
+        db.query(Guest)
+        .filter(Guest.id == guest_id)
+        .first()
+    )
+
+def assign_guests_to_reservation(
+    db: Session,
+    reservation_id: UUID,
+    guest_ids: list[UUID]
+) -> list[ReservationGuest]:
+    assignments = []
+
+    for guest_id in guest_ids:
+        assignment = ReservationGuest(
+            reservation_id=reservation_id,
+            guest_id=guest_id
+        )
+
+        db.add(assignment)
+        assignments.append(assignment)
+
+    db.commit()
+
+    # Refresh to load relationships
+    for assignment in assignments:
+        db.refresh(assignment)
+
+    return assignments
+
+def reservation_guest_exists(
+    db: Session,
+    reservation_id: UUID,
+    guest_id: UUID
+):
+    return (
+        db.query(ReservationGuest)
+        .filter(
+            ReservationGuest.reservation_id == reservation_id,
+            ReservationGuest.guest_id == guest_id
+        )
+        .first()
+    )
+
+def remove_guest_from_reservation(
+    db: Session,
+    reservation_id: UUID,
+    guest_id: UUID
+):
+    assignment = (
+        db.query(ReservationGuest)
+        .filter(
+            ReservationGuest.reservation_id == reservation_id,
+            ReservationGuest.guest_id == guest_id
+        )
+        .first()
+    )
+
+    if assignment:
+        db.delete(assignment)
+        db.commit()
+
+    return assignment
+
+
+def count_reservation_guests(
+    db: Session,
+    reservation_id: UUID
+) -> int:
+    return (
+        db.query(ReservationGuest)
+        .filter(ReservationGuest.reservation_id == reservation_id)
+        .count()
+    )
 
 
 # End file:
