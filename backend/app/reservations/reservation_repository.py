@@ -384,7 +384,7 @@ def create_room_assignment(
     room_id: UUID,
     guest_id: UUID,
     assigned_by: UUID | None = None
-) -> RoomAssignment:
+) -> dict:
     assignment = RoomAssignment(
         reservation_id=reservation_id,
         room_id=room_id,
@@ -396,18 +396,53 @@ def create_room_assignment(
     db.commit()
     db.refresh(assignment)
 
-    return assignment
+    # Eager-load the room and guest relationships for the response
+    db.refresh(
+        assignment,
+        ["room", "guest"]
+    )
+
+    # Build response dict with computed fields for Pydantic serialization
+    return {
+        "id": assignment.id,
+        "reservation_id": assignment.reservation_id,
+        "room_id": assignment.room_id,
+        "room_number": assignment.room.room_number,
+        "guest_id": assignment.guest_id,
+        "guest_name": f"{assignment.guest.first_name} {assignment.guest.last_name}",
+        "assigned_by": assignment.assigned_by,
+        "assignment_date": assignment.assignment_date
+    }
 
 
 def get_reservation_room_assignments(
     db: Session,
     reservation_id: UUID
-) -> list[RoomAssignment]:
-    return (
+) -> list[dict]:
+    assignments = (
         db.query(RoomAssignment)
+        .options(
+            joinedload(RoomAssignment.room),
+            joinedload(RoomAssignment.guest)
+        )
         .filter(RoomAssignment.reservation_id == reservation_id)
         .all()
     )
+
+    # Convert ORM objects to dicts with computed fields
+    return [
+        {
+            "id": assignment.id,
+            "reservation_id": assignment.reservation_id,
+            "room_id": assignment.room_id,
+            "room_number": assignment.room.room_number,
+            "guest_id": assignment.guest_id,
+            "guest_name": f"{assignment.guest.first_name} {assignment.guest.last_name}",
+            "assigned_by": assignment.assigned_by,
+            "assignment_date": assignment.assignment_date
+        }
+        for assignment in assignments
+    ]
 
 
 def get_guest_room_assignment(

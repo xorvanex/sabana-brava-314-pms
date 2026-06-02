@@ -347,14 +347,29 @@ def get_reservation_guests(
 )
 def assign_guests_to_reservation(
     reservation_id: UUID,
-    guest_assign: reservation_scheme.ReservationGuestAssign,
+    guest_ids: Optional[List[str]] = Form(...),
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
+    # Parse guest IDs from form field
+    parsed_guest_ids: List[UUID] = []
+    for guest_id_value in guest_ids or []:
+        for guest_id in guest_id_value.split(","):
+            guest_id = guest_id.strip()
+            if not guest_id:
+                continue
+            try:
+                parsed_guest_ids.append(UUID(guest_id))
+            except ValueError:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Invalid guest_id UUID: {guest_id}"
+                )
+
     return reservation_service.assign_guests_to_reservation(
         db,
         reservation_id,
-        guest_assign.guest_ids
+        parsed_guest_ids
     )
 
 
@@ -404,7 +419,8 @@ def get_reservation_room_assignments(
 )
 def create_room_assignment(
     reservation_id: UUID,
-    assignment_data: reservation_scheme.RoomAssignmentCreate,
+    room_id: UUID = Form(...),
+    guest_id: UUID = Form(...),
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
@@ -421,8 +437,8 @@ def create_room_assignment(
     return reservation_service.create_room_assignment(
         db,
         reservation_id,
-        assignment_data.room_id,
-        assignment_data.guest_id,
+        room_id,
+        guest_id,
         assigned_by
     )
 
