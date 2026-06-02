@@ -26,4 +26,19 @@ def require_admin_or_owner(payload: dict = Depends(verify_token)) -> dict:
 
     return payload
 
+
+# Authorization dependency: allows ADMIN, OWNER, or RECEPTIONIST roles
+def require_admin_owner_or_receptionist(payload: dict = Depends(verify_token)) -> dict:
+    # Extract role from JWT payload
+    rol = payload.get("role")
+
+    # Validate role permissions
+    if rol not in ["OWNER", "ADMINISTRATOR", "RECEPTIONIST"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to perform this action."
+        )
+
+    return payload
+
 # End file:

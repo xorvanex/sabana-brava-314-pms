@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.database.sessions import get_db
 
-from app.auth.dependencies import require_admin_or_owner
+from app.auth.dependencies import require_admin_owner_or_receptionist
 
 from . import reservation_scheme, reservation_service
 
@@ -72,7 +72,7 @@ def create_reservation(
     room_ids: Optional[List[str]] = Form(None),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     user_id = token_payload.get("sub")
 
@@ -116,7 +116,7 @@ def create_reservation(
 )
 def get_all_reservations(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return reservation_service.get_all_reservations(db)
@@ -129,7 +129,7 @@ def get_all_reservations(
 )
 def get_active_reservations(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return reservation_service.get_active_reservations(db)
 
@@ -142,7 +142,7 @@ def get_active_reservations(
 def get_company_reservations(
     company_id: UUID,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return reservation_service.get_company_reservations(db, company_id)
 
@@ -156,7 +156,7 @@ def get_reservation_by_id(
     reservation_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return reservation_service.get_reservation_by_id(
@@ -183,7 +183,7 @@ def update_reservation(
     room_ids: Optional[List[str]] = Form(None),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     # Build validated update schema from form data
@@ -212,7 +212,7 @@ def toggle_reservation_status(
     reservation_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return reservation_service.toggle_reservation_status(
@@ -230,7 +230,7 @@ def confirm_reservation(
     reservation_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     from app.reservations.reservation_scheme import ReservationUpdate
 
@@ -254,7 +254,7 @@ def check_in_reservation(
     reservation_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     from app.reservations.reservation_scheme import ReservationUpdate
     
@@ -279,7 +279,7 @@ def check_out_reservation(
     reservation_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     from app.reservations.reservation_scheme import ReservationUpdate
     
@@ -304,7 +304,7 @@ def mark_no_show(
     reservation_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     from app.reservations.reservation_scheme import ReservationUpdate
     
@@ -331,7 +331,7 @@ def mark_no_show(
 def get_reservation_guests(
     reservation_id: UUID,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return reservation_service.get_reservation_guests(
         db,
@@ -349,7 +349,7 @@ def assign_guests_to_reservation(
     reservation_id: UUID,
     guest_ids: Optional[List[str]] = Form(...),
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     # Parse guest IDs from form field
     parsed_guest_ids: List[UUID] = []
@@ -382,7 +382,7 @@ def remove_guest_from_reservation(
     reservation_id: UUID,
     guest_id: UUID,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return reservation_service.remove_guest_from_reservation(
         db,
@@ -403,7 +403,7 @@ def remove_guest_from_reservation(
 def get_reservation_room_assignments(
     reservation_id: UUID,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return reservation_service.get_reservation_room_assignments(
         db,
@@ -422,7 +422,7 @@ def create_room_assignment(
     room_id: UUID = Form(...),
     guest_id: UUID = Form(...),
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     # Get user ID from token for assigned_by field
     user_id = token_payload.get("sub")
@@ -452,7 +452,7 @@ def delete_room_assignment(
     reservation_id: UUID,
     guest_id: UUID,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return reservation_service.delete_room_assignment(
         db,

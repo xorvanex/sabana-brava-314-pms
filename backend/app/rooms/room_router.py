@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.database.sessions import get_db
 
-from app.auth.dependencies import require_admin_or_owner
+from app.auth.dependencies import require_admin_owner_or_receptionist
 from app.auth.jwt_handler import verify_token
 
 from app.rooms.room_scheme import (
@@ -49,7 +49,7 @@ def create_room(
     room_status: RoomStatusEnum = Form(RoomStatusEnum.AVAILABLE, alias="status"),
     
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     # Build the Pydantic schema from form data
     room_data = RoomCreate(
@@ -102,7 +102,7 @@ def update_room(
     is_active: bool = Form(None),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     # Build the update schema with optional values
     room_data = RoomUpdate(
@@ -123,7 +123,7 @@ def update_room_status(
     room_id: uuid.UUID,
     room_status: RoomStatusEnum = Form(..., alias="status"),
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     status_data = RoomStatusUpdate(
         status=room_status
@@ -139,7 +139,7 @@ def update_room_status(
 def delete_room(
     room_id: uuid.UUID,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     delete_room_service(db, room_id)
 

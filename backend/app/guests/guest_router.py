@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from app.database.sessions import get_db
 
 from app.auth.dependencies import (
-    require_admin_or_owner
+    require_admin_owner_or_receptionist
 )
 
 from . import (
@@ -63,7 +63,7 @@ def create_guest(
     phone: str | None = Form(None),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     guest_in = guest_scheme.GuestCreate(
@@ -92,7 +92,7 @@ def create_guest(
 )
 def get_all_guests(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return guest_service.get_all_guests(db)
@@ -110,7 +110,7 @@ def get_company_guests(
     company_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return guest_service.get_company_guests(
@@ -131,7 +131,7 @@ def get_guest_by_id(
     guest_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return guest_service.get_guest_by_id(
@@ -162,7 +162,7 @@ def update_guest(
     phone: str | None = Form(None),
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     guest_in = guest_scheme.GuestUpdate(
@@ -193,7 +193,7 @@ def delete_guest(
     guest_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return guest_service.delete_guest(
