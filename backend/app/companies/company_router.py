@@ -14,7 +14,7 @@ from fastapi import (
 
 from sqlalchemy.orm import Session
 from app.database.sessions import get_db
-from app.auth.dependencies import require_admin_or_owner
+from app.auth.dependencies import require_admin_or_owner, require_admin_owner_or_receptionist
 from . import company_scheme, company_service
 
 
@@ -66,7 +66,7 @@ def create_company(
 )
 def get_all_companies(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return company_service.get_all_companies(db)
@@ -79,7 +79,7 @@ def get_all_companies(
 )
 def get_active_companies(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return company_service.get_active_companies(db)
 
@@ -93,7 +93,7 @@ def get_company_by_id(
     company_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return company_service.get_company_by_id(
@@ -109,7 +109,7 @@ def get_company_by_id(
 def get_company_by_nit(
     nit: str,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     company = company_service.get_company_by_nit(db, nit)
     return company

@@ -48,7 +48,7 @@ def get_all_contracts(db: Session):
     )
 
 
-# Retrieve contract by company
+# Retrieve actives contract by company
 def get_company_active_contracts(
     db: Session,
     company_id: UUID

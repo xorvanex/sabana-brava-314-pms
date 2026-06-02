@@ -20,7 +20,7 @@ from starlette.responses import StreamingResponse
 
 from app.database.sessions import get_db
 
-from app.auth.dependencies import require_admin_or_owner
+from app.auth.dependencies import require_admin_or_owner, require_admin_owner_or_receptionist
 
 from . import contract_scheme, contract_service
 
@@ -153,7 +153,7 @@ def preview_contract_pdf(
 )
 def get_all_contracts(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return contract_service.get_all_contracts(db)
@@ -166,7 +166,7 @@ def get_all_contracts(
 )
 def get_active_contracts(
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return contract_service.get_active_contracts(db)
 
@@ -179,7 +179,7 @@ def get_active_contracts(
 def get_company_contracts(
     company_id: UUID,
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
     return contract_service.get_company_contracts(db, company_id)
 
@@ -193,7 +193,7 @@ def get_contract_by_id(
     contract_id: UUID,
 
     db: Session = Depends(get_db),
-    token_payload: dict = Depends(require_admin_or_owner)
+    token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
     return contract_service.get_contract_by_id(
