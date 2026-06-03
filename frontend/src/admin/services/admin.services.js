@@ -1,8 +1,17 @@
 import { API_URL } from "@/shared/API/api";
+import { parseApiError } from "@/admin/utils/parseApiError";
 
 function authHeaders() {
   const token = localStorage.getItem("access_token");
   return { Authorization: `Bearer ${token}` };
+}
+
+async function parseResponse(response, fallbackError) {
+  const data = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new Error(parseApiError(data, fallbackError));
+  }
+  return data;
 }
 
 // ─── ROOMS ───────────────────────────────────────────────────────────────────
@@ -12,9 +21,7 @@ export async function getAllRooms() {
     method: "GET",
     headers: authHeaders(),
   });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error("Error al obtener habitaciones");
-  return data;
+  return parseResponse(response, "Error al obtener habitaciones");
 }
 
 export async function createRoom(roomData) {
@@ -28,13 +35,7 @@ export async function createRoom(roomData) {
     headers: authHeaders(),
     body,
   });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message =
-      typeof data?.detail === "string" ? data.detail : "Error al crear habitación";
-    throw new Error(message);
-  }
-  return data;
+  return parseResponse(response, "Error al crear habitación");
 }
 
 export async function updateRoom(roomId, roomData) {
@@ -48,13 +49,7 @@ export async function updateRoom(roomId, roomData) {
     headers: authHeaders(),
     body,
   });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message =
-      typeof data?.detail === "string" ? data.detail : "Error al actualizar habitación";
-    throw new Error(message);
-  }
-  return data;
+  return parseResponse(response, "Error al actualizar habitación");
 }
 
 export async function updateRoomStatus(roomId, status) {
@@ -66,9 +61,7 @@ export async function updateRoomStatus(roomId, status) {
     headers: authHeaders(),
     body,
   });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error("Error al cambiar estado de la habitación");
-  return data;
+  return parseResponse(response, "Error al cambiar estado de la habitación");
 }
 
 export async function deleteRoom(roomId) {
@@ -76,7 +69,10 @@ export async function deleteRoom(roomId) {
     method: "DELETE",
     headers: authHeaders(),
   });
-  if (!response.ok) throw new Error("Error al eliminar habitación");
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(parseApiError(data, "Error al eliminar habitación"));
+  }
 }
 
 // ─── COMPANIES ───────────────────────────────────────────────────────────────
@@ -86,9 +82,7 @@ export async function getAllCompanies() {
     method: "GET",
     headers: authHeaders(),
   });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) throw new Error("Error al obtener empresas");
-  return data;
+  return parseResponse(response, "Error al obtener empresas");
 }
 
 export async function createCompany(companyData) {
@@ -105,16 +99,10 @@ export async function createCompany(companyData) {
     headers: authHeaders(),
     body,
   });
-  const data = await response.json().catch(() => null);
-  if (!response.ok) {
-    const message =
-      typeof data?.detail === "string" ? data.detail : "Error al registrar empresa";
-    throw new Error(message);
-  }
-  return data;
+  return parseResponse(response, "Error al registrar empresa");
 }
 
-// ─── BILLING (stub hasta que exista endpoint) ─────────────────────────────────
+// ─── BILLING ─────────────────────────────────────────────────────────────────
 
 export async function getBillingHistory() {
   return [];
@@ -124,10 +112,12 @@ export async function generateMonthlyInvoice({ empresaId, mes, anio }) {
   void empresaId;
   void mes;
   void anio;
-  throw new Error("El endpoint de facturación mensual aún no está disponible");
+  throw new Error(
+    "La generación de facturas mensuales aún no está disponible en el sistema."
+  );
 }
 
-// ─── ADMIN SUMMARY ────────────────────────────────────────────────────────────
+// ─── Solo admin (métricas habitaciones/empresas) ───────────────────────────────
 
 export async function getAdminSummary() {
   try {
