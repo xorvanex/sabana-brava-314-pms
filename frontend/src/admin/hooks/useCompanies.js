@@ -22,8 +22,14 @@ export function useCompanies() {
   };
 
   const handleCreate = async (companyData) => {
-    await createCompany(companyData);
-    await loadCompanies();
+    try {
+      await createCompany(companyData);
+      await loadCompanies();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Error al registrar la empresa.";
+      throw new Error(message);
+    }
   };
 
   useEffect(() => {

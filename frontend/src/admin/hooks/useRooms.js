@@ -27,13 +27,18 @@ export function useRooms() {
     }
   };
 
-  const handleCreate = async (roomData) => {
-    await createRoom({
-      numero: roomData.numero,
-      descripcion: roomData.descripcion,
-      status: "AVAILABLE",
-    });
-    await loadRooms();
+   const handleCreate = async (roomData) => {
+    try {
+      await createRoom({
+        numero: roomData.numero,
+        descripcion: roomData.descripcion,
+        status: "AVAILABLE",
+      });
+      await loadRooms();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al registrar la habitación.";
+      throw new Error(message);
+    }
   };
 
   const handleUpdate = async (roomId, roomData) => {
@@ -46,7 +51,10 @@ export function useRooms() {
       await updateRoomStatus(roomId, status);
       await loadRooms();
     } catch (err) {
-      setError(err.message);
+      const message =
+        err instanceof Error ? err.message : "Error al cambiar estado de la habitación.";
+      setError(message);
+      throw new Error(message);
     }
   };
 
