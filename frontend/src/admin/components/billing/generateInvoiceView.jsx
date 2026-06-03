@@ -1,5 +1,6 @@
 "use client";
 
+import AdminAlert from "@/admin/components/ui/AdminAlert";
 import { useState } from "react";
 import { useBilling } from "@/admin/hooks/useBilling";
 import Button from "@/shared/globalComponents/ui/button/Button";
@@ -20,6 +21,22 @@ export default function GenerateInvoiceView() {
     setMessage(null);
     setError(null);
     setSaving(true);
+
+    if (!empresaId) {
+      setError("Debes seleccionar una empresa.");
+      return;
+    }
+    const mesNum = Number(mes);
+    const anioNum = Number(anio);
+    if (mesNum < 1 || mesNum > 12) {
+      setError("El mes debe estar entre 1 y 12.");
+      return;
+    }
+    if (anioNum < 2000) {
+      setError("El año no es válido.");
+      return;
+    }
+    
     try {
       await handleGenerate({ empresaId, mes: Number(mes), anio: Number(anio) });
       setMessage("Factura generada correctamente.");
@@ -53,7 +70,7 @@ export default function GenerateInvoiceView() {
                 <option value="">Seleccionar empresa...</option>
                 {companies.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nombre} — {c.nit}
+                    {c.name} — {c.nit}
                   </option>
                 ))}
               </select>

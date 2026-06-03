@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import AdminAlert from "@/admin/components/ui/AdminAlert";
 import { useRooms } from "@/admin/hooks/useRooms";
 import Spinner from "@/shared/globalComponents/ui/spinner/Spinner";
 
@@ -13,6 +15,18 @@ const ROOM_STATUSES = [
 
 export default function RoomStatusView() {
   const { rooms, loading, error, handleUpdateStatus } = useRooms();
+  const [statusError, setStatusError] = useState(null);
+
+  const onStatusChange = async (roomId, newStatus) => {
+    setStatusError(null);
+    try {
+      await handleUpdateStatus(roomId, newStatus);
+    } catch (err) {
+      setStatusError(
+        err instanceof Error ? err.message : "No se pudo cambiar el estado."
+      );
+    }
+  };
 
   return (
     <section className="space-y-6">
@@ -23,11 +37,10 @@ export default function RoomStatusView() {
         Cambia el estado operativo de cada habitación.
       </p>
 
-      {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </p>
-      )}
+      <AdminAlert
+        message={error || statusError}
+        onDismiss={() => setStatusError(null)}
+      />
 
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-gray-500">
@@ -44,12 +57,16 @@ export default function RoomStatusView() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-white p-4 shadow-sm"
             >
               <div>
-                <p className="font-medium text-emerald-900">Habitación {room.room_number}</p>
-                <p className="text-sm text-gray-500">{room.description || "Sin descripción"}</p>
+                <p className="font-medium text-emerald-900">
+                  Habitación {room.room_number}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {room.description || "Sin descripción"}
+                </p>
               </div>
               <select
                 value={room.status}
-                onChange={(e) => handleUpdateStatus(room.id, e.target.value)}
+                onChange={(e) => onStatusChange(room.id, e.target.value)}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
               >
                 {ROOM_STATUSES.map(({ value, label }) => (
