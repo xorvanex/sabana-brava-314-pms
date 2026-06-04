@@ -129,6 +129,36 @@ def get_invoice_details(
     )
 
 
+# Create invoice without commit
+# Used for transactional invoice generation
+def create_invoice_without_commit(
+    db: Session,
+    invoice_data: dict
+) -> Invoice:
+
+    invoice = Invoice(**invoice_data)
+
+    db.add(invoice)
+    db.flush()
+
+    return invoice
+
+
+# Create invoice detail without commit
+# Used for transactional invoice generation
+def create_invoice_detail_without_commit(
+    db: Session,
+    detail_data: dict
+) -> InvoiceDetail:
+
+    detail = InvoiceDetail(**detail_data)
+
+    db.add(detail)
+    db.flush()
+
+    return detail
+
+
 # Cancel invoice
 def cancel_invoice(
     db: Session,

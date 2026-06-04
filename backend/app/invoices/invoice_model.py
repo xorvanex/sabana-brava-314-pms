@@ -18,18 +18,18 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-import uuid
+import uuid, enum
 
 from app.database.base import Base
 
 
-class InvoiceStatusEnum(str):
+class InvoiceStatusEnum(str, enum.Enum):
     PENDING = "PENDING"
     ISSUED = "ISSUED"
     CANCELLED = "CANCELLED"
 
 
-class DianStatusEnum(str):
+class DianStatusEnum(str, enum.Enum):
     PENDING = "PENDING"
     SENT = "SENT"
     ACCEPTED = "ACCEPTED"
@@ -176,6 +176,11 @@ class Invoice(Base):
         cascade="all, delete-orphan",
     )
 
+    reservations = relationship(
+        "Reservation",
+        back_populates="invoice",
+    )
+
 
 class InvoiceDetail(Base):
     """
@@ -227,4 +232,4 @@ class InvoiceDetail(Base):
     )
 
 
-# End File: 
+# End File:
