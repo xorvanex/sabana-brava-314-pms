@@ -63,6 +63,21 @@ def get_company_active_contracts(
         .all()
     )
 
+# Retrieve latest active contract by company
+def get_latest_active_contract_by_company(
+    db: Session,
+    company_id: UUID
+) -> Contract | None:
+
+    return (
+        db.query(Contract)
+        .filter(
+            Contract.company_id == company_id,
+            Contract.is_active == True
+        )
+        .order_by(desc(Contract.start_date))
+        .first()
+    )
 
 # Retrieve contracts by company
 def get_company_contracts(db: Session, company_id: UUID):
