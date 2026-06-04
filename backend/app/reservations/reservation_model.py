@@ -101,11 +101,17 @@ class Reservation(Base):
         nullable=False
     )
 
-    # Invoice foreign key for invoice tracking
+# Invoice foreign key for invoice tracking
     invoice_id = Column(
         Uuid(as_uuid=True),
         ForeignKey("invoices.id"),
         nullable=True
+    )
+
+    # ORM relationship with Invoice model
+    invoice = relationship(
+        "Invoice",
+        back_populates="reservations",
     )
 
     # Audit timestamps

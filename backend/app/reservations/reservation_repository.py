@@ -631,6 +631,6 @@ def assign_invoice_to_reservations(
         )
     )
 
-    db.commit()
+    db.flush()
 
 # End file:
