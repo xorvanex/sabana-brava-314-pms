@@ -2,9 +2,10 @@
 
 # Start file:
 
+from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Form
 from sqlalchemy.orm import Session
 
 from app.database.sessions import get_db
@@ -24,9 +25,17 @@ router = APIRouter(
     response_model=invoice_scheme.InvoiceResponse
 )
 def generate_invoice(
-    invoice_request: invoice_scheme.GenerateInvoiceRequest,
+    company_id: UUID = Form(...),
+    period_start: date = Form(...),
+    period_end: date = Form(...),
     db: Session = Depends(get_db)
 ):
+
+    invoice_request = invoice_scheme.GenerateInvoiceRequest(
+        company_id=company_id,
+        period_start=period_start,
+        period_end=period_end
+    )
 
     return invoice_service.generate_invoice(
         db,

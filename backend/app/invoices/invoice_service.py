@@ -3,8 +3,9 @@
 # Start file:
 
 import hashlib
+import re
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import HTTPException
@@ -158,8 +159,8 @@ def generate_invoice(
         setattr(invoice, "tracking_id", dian_response["tracking_id"])
         setattr(invoice, "dian_response_message", dian_response["message"])
         setattr(invoice, "dian_status", dian_response["dian_status"])
-        setattr(invoice, "issued_at", datetime.utcnow())
-        setattr(invoice, "validated_at", datetime.utcnow())
+        setattr(invoice, "issued_at", datetime.now(timezone.utc))
+        setattr(invoice, "validated_at", datetime.now(timezone.utc))
 
         # Extract IDs for type safety
         invoice_uuid: UUID = invoice.id  # type: ignore
@@ -257,8 +258,12 @@ def cancel_invoice(
             detail="Invoice not found"
         )
 
-    # Extraemos el valor para satisfacer al type checker
-    current_status: str = str(invoice.invoice_status) # type: ignore
+    # Extract the value to satisfy the type checker
+    current_status: str = str(invoice.invoice_status)  # type: ignore
+
+    # Idempotency: if already cancelled, return invoice directly
+    if current_status == InvoiceStatusEnum.CANCELLED.value:
+        return invoice
 
     if current_status != InvoiceStatusEnum.PENDING.value:
         raise HTTPException(
@@ -276,19 +281,24 @@ def cancel_invoice(
 def _generate_invoice_number(
     company_name: str
 ) -> str:
+    # Sanitize company name:
+    # - remove spaces
+    # - remove special characters (keep letters only)
+    # - uppercase result
+    # - truncate to 4 characters
+    sanitized = re.sub(r'[^A-Za-z]', '', company_name)
+    sanitized = sanitized.upper()[:4]
 
-    company_code = (
-        company_name
-        .replace(" ", "")
-        .upper()[:5]
-    )
+    # If no letters remain, use default
+    if not sanitized:
+        sanitized = "COMP"
 
-    timestamp = datetime.utcnow().strftime(
+    timestamp = datetime.now(timezone.utc).strftime(
         "%Y%m%d%H%M%S"
     )
 
     return (
-        f"INV-{company_code}-{timestamp}"
+        f"INV-{sanitized}-{timestamp}"
     )
 
 
@@ -359,7 +369,7 @@ def _generate_cufe(
         f"{invoice_number}"
         f"{company_id}"
         f"{total}"
-        f"{datetime.utcnow().isoformat()}"
+        f"{datetime.now(timezone.utc).isoformat()}"
     )
 
     return hashlib.sha256(
@@ -374,7 +384,7 @@ def _simulate_dian_validation():
         "dian_status": DianStatusEnum.ACCEPTED.value,
         "tracking_id": (
             f"TRACK-"
-            f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+            f"{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
         ),
         "message": (
             "Invoice accepted by DIAN simulator"
