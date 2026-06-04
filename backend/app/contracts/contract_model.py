@@ -102,10 +102,17 @@ class Contract(Base):
         viewonly=True
     )
 
-    # Reservations associated to this contract
+# Reservations associated to this contract
     reservations = relationship(
         "Reservation",
         back_populates="contract"
+    )
+
+    # One-to-many relationship:
+    # A contract can have multiple invoices associated
+    invoices = relationship(
+        "Invoice",
+        back_populates="contract",
     )
 
 

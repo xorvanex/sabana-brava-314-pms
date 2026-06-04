@@ -66,11 +66,18 @@ class Company(Base):
         back_populates="company",
     )
     
-    # A company can have multiple employeds(GUESTS) associate
+# A company can have multiple employeds(GUESTS) associate
     guests = relationship(
         "Guest",
         back_populates="company",
         cascade="all, delete-orphan"
+    )
+
+    # One-to-many relationship:
+    # A company can have multiple invoices associated
+    invoices = relationship(
+        "Invoice",
+        back_populates="company",
     )
 
 # End file:
