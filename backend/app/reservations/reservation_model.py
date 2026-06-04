@@ -101,6 +101,13 @@ class Reservation(Base):
         nullable=False
     )
 
+    # Invoice foreign key for invoice tracking
+    invoice_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("invoices.id"),
+        nullable=True
+    )
+
     # Audit timestamps
     created_at = Column(
         DateTime(timezone=True),

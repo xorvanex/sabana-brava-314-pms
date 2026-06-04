@@ -8,7 +8,17 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, joinedload
 
-from .reservation_model import Reservation, ReservationRoom, RoomAssignment
+from .reservation_model import Reservation, ReservationRoom, RoomAssignment, ReservationStatusEnum
+
+
+# Statuses eligible for billing/invoicing
+BILLABLE_STATUSES = {
+    ReservationStatusEnum.CONFIRMED,
+    ReservationStatusEnum.CHECKED_IN,
+    ReservationStatusEnum.COMPLETED
+}
+
+
 from app.contracts.contract_model import Contract, ContractRoom
 from app.rooms.room_model import Room
 
@@ -502,5 +512,125 @@ def get_room_by_id(
         .first()
     )
 
+
+# =========================================================
+# INVOICE TRACKING REPOSITORY FUNCTIONS
+# =========================================================
+
+def get_uninvoiced_reservations(
+    db: Session,
+    company_id: UUID | None = None,
+    contract_id: UUID | None = None
+) -> list[Reservation]:
+    """
+    Retrieve reservations that are eligible for billing but have not been invoiced.
+
+    Returns reservations where:
+    - invoice_id IS NULL (not yet invoiced)
+    - status is in BILLABLE_STATUSES (eligible for billing)
+
+    Args:
+        db: Database session
+        company_id: Optional filter by company
+        contract_id: Optional filter by contract
+
+    Returns:
+        List of uninvoiced reservations
+    """
+    query = (
+        db.query(Reservation)
+        .filter(
+            Reservation.invoice_id.is_(None),
+            Reservation.status.in_(BILLABLE_STATUSES)
+        )
+        .options(
+            joinedload(Reservation.company),
+            joinedload(Reservation.contract),
+            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
+        )
+    )
+
+    if company_id is not None:
+        query = query.filter(Reservation.company_id == company_id)
+
+    if contract_id is not None:
+        query = query.filter(Reservation.contract_id == contract_id)
+
+    return query.all()
+
+
+def get_uninvoiced_reservations_by_period(
+    db: Session,
+    company_id: UUID,
+    period_start: date,
+    period_end: date
+) -> list[Reservation]:
+    """
+    Retrieve uninvoiced reservations within a specific billing period.
+
+    Returns reservations where:
+    - belong to the provided company
+    - invoice_id IS NULL (not yet invoiced)
+    - status is in BILLABLE_STATUSES (eligible for billing)
+    - start_date >= period_start (reservation starts on or after period start)
+    - end_date <= period_end (reservation ends on or before period end)
+
+    This ensures only reservations that fall completely inside the billing period
+    are returned, preventing partial period invoices.
+
+    Args:
+        db: Database session
+        company_id: The company to filter by
+        period_start: Start date of the billing period
+        period_end: End date of the billing period
+
+    Returns:
+        List of uninvoiced reservations within the billing period
+    """
+    query = (
+        db.query(Reservation)
+        .filter(
+            Reservation.company_id == company_id,
+            Reservation.invoice_id.is_(None),
+            Reservation.status.in_(BILLABLE_STATUSES),
+            Reservation.start_date >= period_start,
+            Reservation.end_date <= period_end
+        )
+        .options(
+            joinedload(Reservation.company),
+            joinedload(Reservation.contract),
+            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
+        )
+    )
+
+    return query.all()
+
+# Associate invoice with reservations
+def assign_invoice_to_reservations(
+    db: Session,
+    reservation_ids: list[UUID],
+    invoice_id: UUID
+) -> None:
+
+    (
+        db.query(Reservation)
+        .filter(
+            Reservation.id.in_(reservation_ids)
+        )
+        .update(
+            {
+                "invoice_id": invoice_id
+            },
+            synchronize_session=False
+        )
+    )
+
+    db.commit()
 
 # End file:
