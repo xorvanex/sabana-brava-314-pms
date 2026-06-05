@@ -7,7 +7,7 @@ export const OWNER_MENU = [
   { label: "Crear nuevo recepcionista", href: ROUTES.OWNER_USERS },
 ];
 
-// Más adelante podrás agregar:
+
 export const ADMIN_MENU = [
 
   { label: "Dashboard", href: ROUTES.ADMIN_HOME },
@@ -20,4 +20,9 @@ export const ADMIN_MENU = [
 
 ];
 
-export const RECEPTIONIST_MENU = [];
+export const RECEPTIONIST_MENU = [
+  { label: "Dashboard", href: ROUTES.RECEPTIONIST_HOME },
+  { label: "Consultar disponibilidad", href: ROUTES.RECEPTIONIST_AVAILABILITY },
+  { label: "Check In", href: ROUTES.RECEPTIONIST_CHECKIN },
+  { label: "Registrar reserva", href: ROUTES.RECEPTIONIST_RESERVATION },
+];
