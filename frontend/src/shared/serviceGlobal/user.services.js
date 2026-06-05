@@ -131,8 +131,23 @@ export async function getOwnerSummary() {
     return null;
   }
 
-  // Contratos solo para dueña
-  const contratosActivos = (rol === "OWNER" || rol === "DUEÑA") ? 0 : null;
+  // Obtener contratos activos
+let contratosActivos = null;
+if (rol === "OWNER" || rol === "DUEÑA") {
+  const contractsResponse = await fetch(`${API_URL}/contracts/active`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (contractsResponse.ok) {
+    const contractsData = await contractsResponse.json().catch(() => []);
+    contratosActivos = contractsData?.length || 0;
+  } else {
+    contratosActivos = 0;
+  }
+}
 
   return {
     totalFacturas: 0,
