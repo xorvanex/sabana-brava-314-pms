@@ -76,7 +76,7 @@ export default function CompanySelector({ onSelect }) {
       {/* Header */}
       <div>
         <h2 className="text-2xl font-semibold text-emerald-900">
-          Seleccionar empresa
+          Hacer click en la empresa con la cual se quiera crear un contrato
         </h2>
       </div>
  
@@ -111,7 +111,7 @@ export default function CompanySelector({ onSelect }) {
             No se encontraron empresas para "{search}"
           </p>
         </div>
-      ) : (
+      ): (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((company) => (
             <button

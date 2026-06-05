@@ -33,9 +33,6 @@ export default function ContractsView() {
           <h1 className="text-2xl font-semibold text-emerald-900">
             Gestión de contratos
           </h1>
-          <p className="text-sm text-gray-600">
-            Crea y administra contratos con las empresas
-          </p>
         </div>
         
         <div className="flex gap-2">
@@ -47,7 +44,7 @@ export default function ContractsView() {
                 : "border border-gray-300 text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Ver empresas
+            Ver empresas 
           </button>
           <button
             onClick={() => handleViewModeChange("list")}

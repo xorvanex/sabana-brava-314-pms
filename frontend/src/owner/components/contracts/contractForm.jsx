@@ -331,7 +331,7 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
             />
 
             <Input
-              label="Tarifa base"
+              label="Tarifa mensual por habitacion"
               id="baseRate"
               name="baseRate"
               type="number"
@@ -343,7 +343,7 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
             />
 
             <Input
-              label="Descripción (opcional)"
+              label="Descripción"
               id="description"
               name="description"
               type="text"
