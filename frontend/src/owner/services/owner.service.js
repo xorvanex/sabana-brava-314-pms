@@ -231,7 +231,19 @@ export async function previewContractPDF(contractData) {
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(errorText || "Error al generar preview del contrato");
+    let errorMessage = errorText || "Error al generar preview del contrato";
+    
+    // Intentar parsear como JSON para obtener el detalle del error
+    try {
+      const errorJson = JSON.parse(errorText);
+      if (errorJson.detail) {
+        errorMessage = errorJson.detail;
+      }
+    } catch (e) {
+      // Si no es JSON, usar el texto tal cual
+    }
+    
+    throw new Error(errorMessage);
   }
 
   const blob = await response.blob();
