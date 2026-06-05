@@ -5,10 +5,12 @@
 from datetime import date
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form
+from fastapi import APIRouter, Depends, Form, status
 from sqlalchemy.orm import Session
+from starlette.responses import StreamingResponse
 
 from app.database.sessions import get_db
+from app.auth.dependencies import require_admin_or_owner
 
 from . import invoice_service, invoice_scheme
 
@@ -100,6 +102,52 @@ def cancel_invoice(
 ):
 
     return invoice_service.cancel_invoice(
+        db,
+        invoice_id
+    )
+
+
+# Preview invoice PDF
+@router.post(
+    "/preview/pdf",
+    response_class=StreamingResponse,
+    responses={
+        200: {
+            "description": "Invoice preview PDF",
+            "content": {
+                "application/pdf": {
+                    "schema": {
+                        "type": "string",
+                        "format": "binary"
+                    }
+                }
+            }
+        }
+    }
+)
+def preview_invoice_pdf(
+    invoice_id: UUID = Form(...),
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+
+    return invoice_service.preview_invoice_pdf(
+        db,
+        invoice_id
+    )
+
+
+# Generate invoice PDF
+@router.get(
+    "/{invoice_id}/pdf"
+)
+def generate_invoice_pdf(
+    invoice_id: UUID,
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
+):
+
+    return invoice_service.generate_invoice_pdf(
         db,
         invoice_id
     )

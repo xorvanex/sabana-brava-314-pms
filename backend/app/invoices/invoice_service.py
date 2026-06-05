@@ -20,6 +20,10 @@ from .invoice_model import (
     InvoiceStatusEnum,
     DianStatusEnum
 )
+from .invoice_pdf_generator import (
+    generate_invoice_pdf as create_invoice_pdf,
+    generate_invoice_preview_pdf as create_invoice_preview_pdf
+)
 
 
 VAT_RATE = Decimal("0.19")
@@ -261,7 +265,7 @@ def cancel_invoice(
     # Extract the value to satisfy the type checker
     current_status: str = str(invoice.invoice_status)  # type: ignore
 
-    # Idempotency: if already cancelled, return invoice directly
+# Idempotency: if already cancelled, return invoice directly
     if current_status == InvoiceStatusEnum.CANCELLED.value:
         return invoice
 
@@ -274,6 +278,72 @@ def cancel_invoice(
     return invoice_repository.cancel_invoice(
         db,
         invoice_id
+    )
+
+
+# Preview invoice PDF
+def preview_invoice_pdf(
+    db: Session,
+    invoice_id: UUID
+):
+    """
+    Generate a preview PDF for an existing invoice.
+    
+    Args:
+        db: Database session
+        invoice_id: ID of the invoice to preview
+        
+    Returns:
+        StreamingResponse: PDF preview ready for display
+        
+    Raises:
+        HTTPException: If the invoice does not exist
+    """
+    # Validate invoice existence
+    invoice = invoice_repository.get_invoice_by_id(
+        db,
+        invoice_id
+    )
+
+    if not invoice:
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found"
+        )
+
+    # Get company associated
+    company = invoice.company
+
+    # Generate preview PDF
+    return create_invoice_preview_pdf(
+        invoice,
+        company
+    )
+
+
+# Generate invoice PDF
+def generate_invoice_pdf(
+    db: Session,
+    invoice_id: UUID
+):
+    """
+    Generate a PDF for an existing invoice.
+    
+    Args:
+        db: Database session
+        invoice_id: ID of the invoice to generate PDF for
+        
+    Returns:
+        StreamingResponse: PDF ready for download
+        
+    Raises:
+        HTTPException: If the invoice does not exist
+    """
+    # Delegate to the PDF generator module
+    return create_invoice_pdf(
+        db,
+        invoice_id,
+        invoice_repository
     )
 
 
