@@ -14,6 +14,10 @@ export const ROUTES = {
   ADMIN_COMPANIES: "/admin/companies",
   ADMIN_BILLING_GENERATE: "/admin/billing/generate",
   ADMIN_BILLING: "/admin/billing",
-  ADMIN_USER: "/admin/user"
-
+  ADMIN_USER: "/admin/user",
+  
+   RECEPTIONIST_HOME: "/receptionist",
+  RECEPTIONIST_AVAILABILITY: "/receptionist/availability",
+  RECEPTIONIST_CHECKIN: "/receptionist/checkin",
+  RECEPTIONIST_RESERVATION: "/receptionist/reservation",
 };
