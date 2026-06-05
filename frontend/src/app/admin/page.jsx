@@ -1,5 +1,5 @@
-import AdminDashboard from "@/admin/components/dashboard/adminDashboard";
+import GlobalDashboard from "@/shared/globalComponents/dashboard/globalDashboard";
 
 export default function AdminPage() {
-  return <AdminDashboard />;
+  return <GlobalDashboard />;
 }

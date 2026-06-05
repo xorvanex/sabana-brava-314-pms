@@ -1,5 +1,7 @@
 "use client";
 
+import AdminAlert from "@/admin/components/ui/AdminAlert";
+import { validateCompanyForm } from "@/admin/utils/parseApiError";
 import { useState } from "react";
 import { useCompanies } from "@/admin/hooks/useCompanies";
 import Button from "@/shared/globalComponents/ui/button/Button";
@@ -27,6 +29,12 @@ export default function RegisterCompanyView() {
   };
 
   const handleSubmit = async (e) => {
+
+    const validationError = validateCompanyForm(form);
+     if (validationError) {
+      setFormError(validationError);
+      return;
+    }
     e.preventDefault();
     setFormError(null);
     setSaving(true);

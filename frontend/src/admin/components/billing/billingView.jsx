@@ -1,5 +1,6 @@
 "use client";
 
+import AdminAlert from "@/admin/components/ui/AdminAlert";
 import { useBilling } from "@/admin/hooks/useBilling";
 
 export default function BillingView() {
@@ -12,8 +13,8 @@ export default function BillingView() {
 
       <div className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
         {error && (
-          <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
+            <p className="text-gray-500">
+              No hay facturas registradas por el momento.
           </p>
         )}
         {loading ? (

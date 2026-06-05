@@ -1,5 +1,7 @@
 "use client";
 
+import AdminAlert from "@/admin/components/ui/AdminAlert";
+import { validateRoomForm } from "@/admin/utils/parseApiError";
 import { useState } from "react";
 import { useRooms } from "@/admin/hooks/useRooms";
 import Button from "@/shared/globalComponents/ui/button/Button";
@@ -23,6 +25,11 @@ export default function RegisterRoomView() {
     e.preventDefault();
     setFormError(null);
     setSaving(true);
+      const validationError = validateRoomForm(form);
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
     try {
       await handleCreate({
         numero: form.numero,
@@ -67,11 +74,7 @@ export default function RegisterRoomView() {
                 className="w-full resize-none rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-200"
               />
             </div>
-            {formError && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {formError}
-              </p>
-            )}
+            <AdminAlert message={formError} onDismiss={() => setFormError(null)} />
             <Button type="submit" disabled={saving}>
               {saving ? (
                 <span className="flex items-center justify-center gap-2">
@@ -82,16 +85,12 @@ export default function RegisterRoomView() {
                 "Registrar habitación"
               )}
             </Button>
-          </form>
+          </form> 
         </div>
 
         <div className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-medium text-emerald-900">Habitaciones registradas</h2>
-          {error && (
-            <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </p>
-          )}
+          <AdminAlert message={error} />
           {loading ? (
             <p className="text-sm text-gray-500">Cargando...</p>
           ) : rooms.length === 0 ? (

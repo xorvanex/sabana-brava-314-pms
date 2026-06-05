@@ -24,7 +24,11 @@ export function useBilling() {
         setInvoices(billing);
         setCompanies(comps);
       } catch (err) {
-        setError(err.message);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "No se pudo cargar la información de facturación."
+        );
       } finally {
         setLoading(false);
       }
@@ -34,7 +38,14 @@ export function useBilling() {
 
   const handleGenerate = async (payload) => {
     setError(null);
-    return generateMonthlyInvoice(payload);
+    try {
+      return await generateMonthlyInvoice(payload);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "No se pudo generar la factura.";
+      setError(message);
+      throw new Error(message);
+    }
   };
 
   return { invoices, companies, loading, error, handleGenerate };
