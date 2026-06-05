@@ -7,6 +7,7 @@ import Button from "@/shared/globalComponents/ui/button/Button";
 export default function ContractPreviewModal({ previewData, onClose, onConfirm }) {
   const [loading, setLoading] = useState(false);
   const [pdfGenerated, setPdfGenerated] = useState(false);
+  const [error, setError] = useState(null);
   const hasDownloaded = useRef(false);
   const isCreating = useRef(false);
 
@@ -32,8 +33,20 @@ export default function ContractPreviewModal({ previewData, onClose, onConfirm }
         window.URL.revokeObjectURL(url);
         
         setPdfGenerated(true);
+        setError(null);
       } catch (err) {
         console.error("Error al descargar preview PDF:", err);
+        let errorMessage = err.message || "Error al generar el PDF del contrato";
+        
+        // Parsear error específico del backend
+        if (errorMessage.includes("Rooms already assigned")) {
+          const roomNumbers = errorMessage.match(/\d+/g)?.join(", ") || "";
+          errorMessage = `Las habitaciones ${roomNumbers} ya están asignadas a otro contrato activo. Por favor, selecciona otras habitaciones.`;
+        } else if (errorMessage.includes("overlapping")) {
+          errorMessage = "La empresa ya tiene un contrato activo con fechas que se superponen. Por favor, selecciona otras fechas.";
+        }
+        
+        setError(errorMessage);
       }
     };
     
@@ -49,7 +62,6 @@ export default function ContractPreviewModal({ previewData, onClose, onConfirm }
     } catch (err) {
       const errorMessage = err.message || "Error al crear contrato";
       
-      // Manejar error de superposición en español
       if (errorMessage.includes("overlapping dates")) {
         alert("La empresa ya tiene un contrato activo con fechas que se superponen. Por favor, selecciona otras fechas.");
       } else {
@@ -100,7 +112,30 @@ export default function ContractPreviewModal({ previewData, onClose, onConfirm }
         </div>
 
         <div className="p-6">
-          {pdfGenerated ? (
+          {error ? (
+            <div className="text-center space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                <svg className="h-16 w-16 mx-auto text-red-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p className="text-red-900 font-medium mb-2">
+                  Error al generar el PDF del contrato
+                </p>
+                <p className="text-sm text-red-700">
+                  {error}
+                </p>
+              </div>
+              
+              <Button
+                type="button"
+                onClick={onClose}
+                variant="outline"
+                className="w-full"
+              >
+                Cerrar
+              </Button>
+            </div>
+          ) : pdfGenerated ? (
             <div className="text-center space-y-4">
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-6">
                 <svg className="h-16 w-16 mx-auto text-emerald-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
