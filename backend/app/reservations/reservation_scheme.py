@@ -108,6 +108,7 @@ class ReservationResponse(BaseModel):
     status: ReservationStatusEnum
     notes: Optional[str]
     created_by: UUID
+    invoice_id: Optional[UUID] = None
 
     rooms: list[ReservationRoomResponse] = Field(default_factory=list)
 
