@@ -25,7 +25,9 @@ from .contract_pdf_generator import (
 def validate_contract_rooms(
     db: Session,
     room_ids: list[UUID],
-    exclude_contract_id: UUID | None = None
+    exclude_contract_id: UUID | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None
 ) -> None:
     if not room_ids:
         return
@@ -36,7 +38,7 @@ def validate_contract_rooms(
         raise HTTPException(
             status_code=400,
             detail="Duplicate room IDs are not allowed"
-    )
+        )
 
     rooms = contract_repository.get_rooms_by_ids(db, room_ids)
     found_room_ids = {cast(UUID, room.id) for room in rooms}
@@ -63,7 +65,9 @@ def validate_contract_rooms(
     assigned_rooms = contract_repository.get_rooms_assigned_to_active_contracts(
         db,
         room_ids,
-        exclude_contract_id=exclude_contract_id
+        exclude_contract_id=exclude_contract_id,
+        start_date=start_date,
+        end_date=end_date
     )
 
     if assigned_rooms:
@@ -73,7 +77,7 @@ def validate_contract_rooms(
         )
         raise HTTPException(
             status_code=400,
-            detail=f"Rooms already assigned to another active contract: {assigned_room_numbers}"
+            detail=f"Rooms already assigned to another active contract with overlapping dates: {assigned_room_numbers}"
         )
 
 
@@ -131,7 +135,9 @@ def create_contract(
 
     validate_contract_rooms(
         db,
-        contract_in.room_ids
+        contract_in.room_ids,
+        start_date=contract_in.start_date,
+        end_date=contract_in.end_date
     )
     
     # Prepare data for persistence
@@ -186,7 +192,9 @@ def preview_contract_pdf(
 
     validate_contract_rooms(
         db,
-        contract_in.room_ids
+        contract_in.room_ids,
+        start_date=contract_in.start_date,
+        end_date=contract_in.end_date
     )
 
     rooms = contract_repository.get_rooms_by_ids(
@@ -307,10 +315,13 @@ def update_contract(
                 for contract_room in contract.contract_rooms
             ]
 
+        # Pass calculated dates to validate even when room_ids unchanged
         validate_contract_rooms(
             db,
             rooms_to_validate,
-            exclude_contract_id=contract_id
+            exclude_contract_id=contract_id,
+            start_date=new_start_date,
+            end_date=new_end_date
         )
 
     return contract_repository.update_contract(
@@ -346,7 +357,9 @@ def toggle_contract_status(
                 cast(UUID, contract_room.room_id)
                 for contract_room in contract.contract_rooms
             ],
-            exclude_contract_id=contract_id
+            exclude_contract_id=contract_id,
+            start_date=cast(date, contract.start_date),
+            end_date=cast(date, contract.end_date)
         )
 
     return contract_repository.update_contract(

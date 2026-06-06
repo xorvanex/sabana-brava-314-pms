@@ -220,7 +220,9 @@ def get_rooms_by_ids(
 def get_rooms_assigned_to_active_contracts(
     db: Session,
     room_ids: list[UUID],
-    exclude_contract_id: UUID | None = None
+    exclude_contract_id: UUID | None = None,
+    start_date: date | None = None,
+    end_date: date | None = None
 ) -> list[Room]:
     if not room_ids:
         return []
@@ -237,6 +239,14 @@ def get_rooms_assigned_to_active_contracts(
 
     if exclude_contract_id:
         query = query.filter(Contract.id != exclude_contract_id)
+
+    # Validation: filter contracts with overlapping dates
+    # Both dates must be provided from contracts
+    if start_date is not None and end_date is not None:
+        query = query.filter(
+            Contract.start_date <= end_date,
+            Contract.end_date >= start_date
+        )
 
     return query.all()
 
