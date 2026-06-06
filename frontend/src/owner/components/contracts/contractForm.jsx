@@ -15,7 +15,7 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
   const [activeContracts, setActiveContracts] = useState([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
   const [conflictModal, setConflictModal] = useState({ open: false, rooms: [] });
-  const [overlapModal, setOverlapModal] = useState(false);
+    const [overlapModal, setOverlapModal] = useState(null);
   const isLoadingRooms = useRef(false);
   const isLoadingContracts = useRef(false);
 
@@ -113,8 +113,8 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
     }
   };
 
-  const checkContractOverlap = async () => {
-    if (!formData.startDate || !formData.endDate) return false;
+    const checkContractOverlap = async () => {
+    if (!formData.startDate || !formData.endDate) return null;
 
     try {
       setCheckingOverlap(true);
@@ -127,14 +127,14 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
         const existingStart = new Date(contract.start_date);
         const existingEnd = new Date(contract.end_date);
         if (newStart <= existingEnd && newEnd >= existingStart) {
-          return true;
+          return contract; // Retornamos el contrato con conflicto
         }
       }
 
-      return false;
+      return null;
     } catch (err) {
       console.error("Error al verificar superposición:", err);
-      return false;
+      return null;
     } finally {
       setCheckingOverlap(false);
     }
@@ -167,9 +167,9 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
       return;
     }
 
-    const hasOverlap = await checkContractOverlap();
-    if (hasOverlap) {
-      setOverlapModal(true);
+    const overlappingContract = await checkContractOverlap();
+    if (overlappingContract) {
+      setOverlapModal(overlappingContract); // Guardamos el objeto del contrato en el modal
       return;
     }
 
@@ -188,11 +188,11 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
   return (
     <div className="space-y-6">
 
-      {/* Modal: fechas superpuestas en contrato de la empresa */}
+            {/* Modal: fechas superpuestas en contrato de la empresa */}
       {overlapModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          onClick={(e) => e.target === e.currentTarget && setOverlapModal(false)}
+          onClick={(e) => e.target === e.currentTarget && setOverlapModal(null)}
         >
           <div className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
             <div className="flex items-center gap-3 bg-red-700 px-6 py-5">
@@ -209,7 +209,7 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
 
             <div className="px-6 py-5">
               <p className="mb-4 text-sm text-gray-600">
-                Las fechas seleccionadas se superponen con un contrato activo existente para la empresa:
+                Las fechas seleccionadas se superponen con un contrato activo de la misma empresa:
               </p>
 
               <div className="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
@@ -218,7 +218,9 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
                 </svg>
                 <div>
                   <p className="text-sm font-medium text-red-900">{company.name}</p>
-                  <p className="text-xs text-red-700 mt-0.5">Ya cuenta con un contrato vigente en este período</p>
+                  <p className="text-xs text-red-700 mt-1">
+                    Contrato vigente: {overlapModal.start_date} al {overlapModal.end_date}
+                  </p>
                 </div>
               </div>
 
@@ -227,7 +229,7 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
               </p>
 
               <button
-                onClick={() => setOverlapModal(false)}
+                onClick={() => setOverlapModal(null)}
                 className="w-full rounded-lg bg-red-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-800"
               >
                 Entendido, volver al formulario
