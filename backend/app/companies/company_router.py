@@ -121,9 +121,6 @@ def get_company_by_nit(
 )
 def update_company(
     company_id: UUID,
-
-    name: str = Form(None),
-    nit: str = Form(None),
     company_representative: str = Form(None),
     address: str = Form(None),
     phone: str = Form(None),
@@ -136,8 +133,6 @@ def update_company(
 
     # Build validated update schema from form data
     company_in = company_scheme.CompanyUpdate(
-        name=name,
-        nit=nit,
         company_representative=company_representative,
         address=address,
         phone=phone,

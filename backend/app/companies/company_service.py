@@ -91,20 +91,6 @@ def update_company(
             detail="Company not found"
         )
 
-    # Prevent duplicated NIT between companies
-    if company_in.nit and company_in.nit != company.nit:
-
-        existing_company = company_repository.get_company_by_nit(
-            db,
-            company_in.nit
-        )
-
-        if existing_company:
-            raise HTTPException(
-                status_code=400,
-                detail="Company NIT already registered"
-            )
-
     # Remove unset values to avoid overwriting existing data
     update_data = company_in.model_dump(exclude_unset=True)
 

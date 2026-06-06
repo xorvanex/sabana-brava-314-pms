@@ -23,9 +23,6 @@ class CompanyCreate(BaseModel):
 
 # Schema for company updates
 class CompanyUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=2, max_length=150)
-
-    nit: Optional[str] = Field(None, min_length=5, max_length=30)
     
     company_representative: Optional[str ]= Field(None, max_length=150)
     
