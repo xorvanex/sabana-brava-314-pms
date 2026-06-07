@@ -1,16 +1,38 @@
-# File path: backend/app/invoices/invoice_service.py
+"""
+Invoice service module.
 
-# Start file:
+This module defines business logic functions for invoice operations.
+It handles invoice generation, retrieval, cancellation, and PDF generation.
+Coordinates with company, contract, and reservation repositories.
 
+Main Functions:
+    - generate_invoice: Core invoice generation workflow
+    - get_invoice_by_id: Retrieve invoice by ID
+    - get_all_invoices: Retrieve all invoices
+    - get_company_invoices: Retrieve invoices by company
+    - cancel_invoice: Cancel pending invoice
+    - generate_invoice_pdf: Generate PDF
+    - preview_invoice_pdf: Preview PDF
+"""
+
+# =============================================================================
+# Standard Library Imports
+# =============================================================================
 import hashlib
 import re
 from decimal import Decimal
 from datetime import datetime, timezone
 from uuid import UUID
 
+# =============================================================================
+# Third-Party Imports
+# =============================================================================
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+# =============================================================================
+# Local Application Imports
+# =============================================================================
 from app.companies import company_repository
 from app.contracts import contract_repository
 from app.reservations import reservation_repository
@@ -26,16 +48,50 @@ from .invoice_pdf_generator import (
 )
 
 
+# =============================================================================
+# Constants
+# =============================================================================
+
+# VAT rate for Colombian invoicing (19%)
 VAT_RATE = Decimal("0.19")
+
+# Days in a month for daily rate calculation
 DAYS_PER_MONTH = Decimal("30")
 
 
-# Generate invoice for a company and billing period
+# =============================================================================
+# Main Business Functions
+# =============================================================================
+
 def generate_invoice(
     db: Session,
     invoice_request: invoice_scheme.GenerateInvoiceRequest
 ):
-
+    """
+    Generate invoice for a company and billing period.
+    
+    This is the core invoice generation workflow:
+    1. Validate company exists
+    2. Validate active contract exists
+    3. Check for existing invoice (prevent duplicates)
+    4. Retrieve uninvoiced reservations for period
+    5. Calculate costs and generate details
+    6. Create invoice with details
+    7. Simulate DIAN validation
+    8. Link reservations to invoice
+    
+    Args:
+        db: Database session
+        invoice_request: Invoice generation request with company and period
+        
+    Returns:
+        Created Invoice object
+        
+    Raises:
+        HTTPException: If company not found, no contract, duplicate, or no reservations
+    """
+    
+    # Validate company exists
     company = company_repository.get_company_by_id(
         db,
         invoice_request.company_id
@@ -47,6 +103,7 @@ def generate_invoice(
             detail="Company not found"
         )
 
+    # Validate active contract exists for company
     contract = contract_repository.get_latest_active_contract_by_company(
         db,
         invoice_request.company_id
@@ -58,7 +115,7 @@ def generate_invoice(
             detail="No active contract found for company"
         )
 
-    # Check for existing invoice for this company and period
+    # Prevent duplicate invoices for the same billing period
     existing_invoice = invoice_repository.get_invoice_by_company_and_period(
         db,
         invoice_request.company_id,
@@ -72,6 +129,7 @@ def generate_invoice(
             detail=f"Invoice already exists for company in period {invoice_request.period_start} to {invoice_request.period_end}"
         )
 
+    # Retrieve reservations that can be billed for this period
     reservations = (
         reservation_repository.get_uninvoiced_reservations_by_period(
             db,
@@ -93,13 +151,16 @@ def generate_invoice(
         company_id: UUID = company.id  # type: ignore
         contract_base_rate: Decimal = Decimal(str(contract.base_rate))  # type: ignore
 
+        # Generate unique invoice number
         invoice_number = _generate_invoice_number(company_name)
 
+        # Build invoice line items from reservations
         invoice_lines = []
         subtotal = Decimal("0")
 
         for reservation in reservations:
 
+            # Calculate cost based on monthly rate and days occupied
             reservation_cost = _calculate_reservation_cost(
                 reservation,
                 contract_base_rate
@@ -122,10 +183,13 @@ def generate_invoice(
                 }
             )
 
+        # Calculate VAT on subtotal
         taxes = _calculate_vat(subtotal)
 
+        # Total includes subtotal plus taxes
         total = subtotal + taxes
 
+        # Create invoice in database (transactional)
         invoice = (
             invoice_repository.create_invoice_without_commit(
                 db,
@@ -144,6 +208,7 @@ def generate_invoice(
             )
         )
 
+        # Create invoice detail line items (transactional)
         for line in invoice_lines:
 
             invoice_repository.create_invoice_detail_without_commit(
@@ -157,18 +222,21 @@ def generate_invoice(
                 }
             )
 
+        # Generate DIAN simulation data
         xml_content = _generate_xml_content(
             invoice_number,
             company_name,
             total
         )
 
+        # Generate CUFE for DIAN compliance
         cufe = _generate_cufe(
             invoice_number,
             company_id,
             total
         )
 
+        # Simulate DIAN validation response
         dian_response = _simulate_dian_validation()
 
         # Use setattr to satisfy type checker for SQLAlchemy columns
@@ -180,6 +248,7 @@ def generate_invoice(
         setattr(invoice, "issued_at", datetime.now(timezone.utc))
         setattr(invoice, "validated_at", datetime.now(timezone.utc))
 
+        # Link invoiced reservations after successful invoice creation
         # Extract IDs for type safety
         invoice_uuid: UUID = invoice.id  # type: ignore
         reservation_ids: list[UUID] = [
@@ -194,6 +263,7 @@ def generate_invoice(
             invoice_uuid
         )
 
+        # Commit the transaction
         db.commit()
         db.refresh(invoice)
 
@@ -201,17 +271,30 @@ def generate_invoice(
 
     except Exception:
 
+        # Rollback on any error during invoice generation
         db.rollback()
 
         raise
 
 
-# Retrieve invoice by ID
 def get_invoice_by_id(
     db: Session,
     invoice_id: UUID
 ):
-
+    """
+    Retrieve invoice by unique identifier.
+    
+    Args:
+        db: Database session
+        invoice_id: UUID of the invoice to retrieve
+        
+    Returns:
+        Invoice object if found
+        
+    Raises:
+        HTTPException: If invoice not found
+    """
+    
     invoice = invoice_repository.get_invoice_by_id(
         db,
         invoice_id
@@ -226,22 +309,42 @@ def get_invoice_by_id(
     return invoice
 
 
-# Retrieve all invoices
 def get_all_invoices(
     db: Session
 ):
-
+    """
+    Retrieve all invoices from the database.
+    
+    Args:
+        db: Database session
+        
+    Returns:
+        List of all Invoice objects
+    """
+    
     return invoice_repository.get_all_invoices(
         db
     )
 
 
-# Retrieve company invoices
 def get_company_invoices(
     db: Session,
     company_id: UUID
 ):
-
+    """
+    Retrieve all invoices for a specific company.
+    
+    Args:
+        db: Database session
+        company_id: UUID of the company
+        
+    Returns:
+        List of Invoice objects for the company
+        
+    Raises:
+        HTTPException: If company not found
+    """
+    
     company = company_repository.get_company_by_id(
         db,
         company_id
@@ -259,12 +362,27 @@ def get_company_invoices(
     )
 
 
-# Cancel invoice
 def cancel_invoice(
     db: Session,
     invoice_id: UUID
 ):
-
+    """
+    Cancel a pending invoice.
+    
+    Only pending invoices can be cancelled. Returns the invoice
+    unchanged if already cancelled (idempotent operation).
+    
+    Args:
+        db: Database session
+        invoice_id: UUID of the invoice to cancel
+        
+    Returns:
+        Cancelled Invoice object
+        
+    Raises:
+        HTTPException: If invoice not found or not cancellable
+    """
+    
     invoice = invoice_repository.get_invoice_by_id(
         db,
         invoice_id
@@ -283,6 +401,7 @@ def cancel_invoice(
     if current_status == InvoiceStatusEnum.CANCELLED.value:
         return invoice
 
+    # Only pending invoices can be cancelled
     if current_status != InvoiceStatusEnum.PENDING.value:
         raise HTTPException(
             status_code=400,
@@ -295,7 +414,6 @@ def cancel_invoice(
     )
 
 
-# Preview invoice PDF
 def preview_invoice_pdf(
     db: Session,
     invoice_id: UUID
@@ -335,7 +453,6 @@ def preview_invoice_pdf(
     )
 
 
-# Generate invoice PDF
 def generate_invoice_pdf(
     db: Session,
     invoice_id: UUID
@@ -361,10 +478,24 @@ def generate_invoice_pdf(
     )
 
 
-# Generate invoice number
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
 def _generate_invoice_number(
     company_name: str
 ) -> str:
+    """
+    Generate unique invoice number from company name and timestamp.
+    
+    Format: INV-{SANITIZED_NAME}-{TIMESTAMP}
+    
+    Args:
+        company_name: Name of the company for sanitization
+        
+    Returns:
+        Generated invoice number string
+    """
     # Sanitize company name:
     # - remove spaces
     # - remove special characters (keep letters only)
@@ -386,12 +517,23 @@ def _generate_invoice_number(
     )
 
 
-# Calculate reservation cost
 def _calculate_reservation_cost(
     reservation,
     monthly_rate: Decimal
 ) -> Decimal:
-
+    """
+    Calculate cost for a reservation based on monthly rate.
+    
+    Formula: (monthly_rate / 30) * occupied_days * room_count
+    
+    Args:
+        reservation: Reservation ORM object
+        monthly_rate: Contract monthly room rate
+        
+    Returns:
+        Calculated cost as Decimal
+    """
+    
     occupied_days = (
         reservation.end_date -
         reservation.start_date
@@ -414,11 +556,21 @@ def _calculate_reservation_cost(
     )
 
 
-# Calculate VAT
 def _calculate_vat(
     subtotal: Decimal
 ) -> Decimal:
-
+    """
+    Calculate VAT (IVA) on subtotal.
+    
+    Applies 19% VAT rate with 2 decimal precision.
+    
+    Args:
+        subtotal: Subtotal amount before VAT
+        
+    Returns:
+        VAT amount as Decimal
+    """
+    
     return (
         subtotal * VAT_RATE
     ).quantize(
@@ -426,13 +578,23 @@ def _calculate_vat(
     )
 
 
-# Generate XML simulation
 def _generate_xml_content(
     invoice_number: str,
     company_name: str,
     total: Decimal
 ) -> str:
-
+    """
+    Generate XML simulation content for invoice.
+    
+    Args:
+        invoice_number: Unique invoice number
+        company_name: Company name
+        total: Invoice total amount
+        
+    Returns:
+        XML content string
+    """
+    
     return f"""
 <Invoice>
     <InvoiceNumber>{invoice_number}</InvoiceNumber>
@@ -442,13 +604,25 @@ def _generate_xml_content(
 """.strip()
 
 
-# Generate simulated CUFE
 def _generate_cufe(
     invoice_number: str,
     company_id: UUID,
     total: Decimal
 ) -> str:
-
+    """
+    Generate CUFE (Codigo Unico de Facturacion Electronica) for DIAN.
+    
+    Creates SHA256 hash combining invoice data for DIAN compliance.
+    
+    Args:
+        invoice_number: Unique invoice number
+        company_id: Company UUID
+        total: Invoice total
+        
+    Returns:
+        CUFE hash string
+    """
+    
     source = (
         f"{invoice_number}"
         f"{company_id}"
@@ -461,9 +635,17 @@ def _generate_cufe(
     ).hexdigest()
 
 
-# Simulate DIAN validation
 def _simulate_dian_validation():
-
+    """
+    Simulate DIAN e-invoicing validation.
+    
+    Returns simulated DIAN validation response for testing.
+    Generate DIAN tracking metadata for the simulated validation flow.
+    
+    Returns:
+        Dictionary with dian_status, tracking_id, and message
+    """
+    
     return {
         "dian_status": DianStatusEnum.ACCEPTED.value,
         "tracking_id": (
@@ -474,5 +656,3 @@ def _simulate_dian_validation():
             "Invoice accepted by DIAN simulator"
         )
     }
-
-# End file:

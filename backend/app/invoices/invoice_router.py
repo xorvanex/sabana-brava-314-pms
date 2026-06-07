@@ -1,19 +1,45 @@
-# File path: backend/app/invoices/invoice_router.py
+"""
+Invoice API router module.
 
-# Start file:
+This module defines the FastAPI routes for invoice operations.
+It provides endpoints for invoice generation, retrieval, cancellation,
+and PDF generation.
 
+Endpoints:
+    - POST /invoices/generate: Generate invoice for company
+    - GET /invoices/{invoice_id}: Get invoice by ID
+    - GET /invoices: Get all invoices
+    - GET /invoices/company/{company_id}: Get company invoices
+    - PATCH /invoices/{invoice_id}/cancel: Cancel invoice
+    - POST /invoices/preview/pdf: Preview invoice PDF
+    - GET /invoices/{invoice_id}/pdf: Generate invoice PDF
+"""
+
+# =============================================================================
+# Standard Library Imports
+# =============================================================================
 from datetime import date
 from uuid import UUID
 
+# =============================================================================
+# Third-Party Imports
+# =============================================================================
 from fastapi import APIRouter, Depends, Form, status
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
+# =============================================================================
+# Local Application Imports
+# =============================================================================
 from app.database.sessions import get_db
 from app.auth.dependencies import require_admin_or_owner
 
 from . import invoice_service, invoice_scheme
 
+
+# =============================================================================
+# Router Configuration
+# =============================================================================
 
 router = APIRouter(
     prefix="/invoices",
@@ -21,10 +47,14 @@ router = APIRouter(
 )
 
 
-# Generate a new invoice for a company and billing period
+# =============================================================================
+# Invoice Generation Endpoints
+# =============================================================================
+
 @router.post(
     "/generate",
-    response_model=invoice_scheme.InvoiceResponse
+    response_model=invoice_scheme.InvoiceResponse,
+    status_code=status.HTTP_201_CREATED
 )
 def generate_invoice(
     company_id: UUID = Form(...),
@@ -33,7 +63,15 @@ def generate_invoice(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-
+    """
+    Generate a billing document for a company and period.
+    
+    Creates a new invoice for the specified company covering the
+    billing period from period_start to period_end.
+    
+    Requires admin or owner authentication.
+    """
+    
     invoice_request = invoice_scheme.GenerateInvoiceRequest(
         company_id=company_id,
         period_start=period_start,
@@ -46,7 +84,10 @@ def generate_invoice(
     )
 
 
-# Retrieve invoice by ID
+# =============================================================================
+# Invoice Retrieval Endpoints
+# =============================================================================
+
 @router.get(
     "/{invoice_id}",
     response_model=invoice_scheme.InvoiceResponse
@@ -56,14 +97,18 @@ def get_invoice_by_id(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-
+    """
+    Retrieve invoice by unique identifier.
+    
+    Requires admin or owner authentication.
+    """
+    
     return invoice_service.get_invoice_by_id(
         db,
         invoice_id
     )
 
 
-# Retrieve all invoices
 @router.get(
     "",
     response_model=list[invoice_scheme.InvoiceResponse]
@@ -72,13 +117,17 @@ def get_all_invoices(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-
+    """
+    Retrieve all invoices.
+    
+    Requires admin or owner authentication.
+    """
+    
     return invoice_service.get_all_invoices(
         db
     )
 
 
-# Retrieve invoices by company
 @router.get(
     "/company/{company_id}",
     response_model=list[invoice_scheme.InvoiceResponse]
@@ -88,14 +137,22 @@ def get_company_invoices(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-
+    """
+    Retrieve all invoices associated with a company.
+    
+    Requires admin or owner authentication.
+    """
+    
     return invoice_service.get_company_invoices(
         db,
         company_id
     )
 
 
-# Cancel an existing invoice
+# =============================================================================
+# Invoice Cancellation Endpoints
+# =============================================================================
+
 @router.patch(
     "/{invoice_id}/cancel",
     response_model=invoice_scheme.InvoiceResponse
@@ -105,14 +162,23 @@ def cancel_invoice(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-
+    """
+    Cancel a pending invoice.
+    
+    Only pending invoices can be cancelled.
+    Requires admin or owner authentication.
+    """
+    
     return invoice_service.cancel_invoice(
         db,
         invoice_id
     )
 
 
-# Preview invoice PDF
+# =============================================================================
+# PDF Generation Endpoints
+# =============================================================================
+
 @router.post(
     "/preview/pdf",
     response_class=StreamingResponse,
@@ -135,14 +201,18 @@ def preview_invoice_pdf(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-
+    """
+    Generate a preview PDF for display in browser.
+    
+    Requires admin or owner authentication.
+    """
+    
     return invoice_service.preview_invoice_pdf(
         db,
         invoice_id
     )
 
 
-# Generate invoice PDF
 @router.get(
     "/{invoice_id}/pdf"
 )
@@ -151,10 +221,13 @@ def generate_invoice_pdf(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-
+    """
+    Generate a downloadable PDF representation of the invoice.
+    
+    Requires admin or owner authentication.
+    """
+    
     return invoice_service.generate_invoice_pdf(
         db,
         invoice_id
     )
-
-# End file:
