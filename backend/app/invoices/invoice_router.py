@@ -30,7 +30,8 @@ def generate_invoice(
     company_id: UUID = Form(...),
     period_start: date = Form(...),
     period_end: date = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     invoice_request = invoice_scheme.GenerateInvoiceRequest(
@@ -52,7 +53,8 @@ def generate_invoice(
 )
 def get_invoice_by_id(
     invoice_id: UUID,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return invoice_service.get_invoice_by_id(
@@ -67,7 +69,8 @@ def get_invoice_by_id(
     response_model=list[invoice_scheme.InvoiceResponse]
 )
 def get_all_invoices(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return invoice_service.get_all_invoices(
@@ -82,7 +85,8 @@ def get_all_invoices(
 )
 def get_company_invoices(
     company_id: UUID,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return invoice_service.get_company_invoices(
@@ -98,7 +102,8 @@ def get_company_invoices(
 )
 def cancel_invoice(
     invoice_id: UUID,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    token_payload: dict = Depends(require_admin_or_owner)
 ):
 
     return invoice_service.cancel_invoice(
