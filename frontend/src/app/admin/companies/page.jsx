@@ -1,5 +1,5 @@
-import RegisterCompanyView from "@/admin/components/company/registerCompanyView";
+import ManageCompaniesView from "@/admin/components/company/manageCompaniesView";
 
 export default function CompaniesPage() {
-  return <RegisterCompanyView />;
+  return <ManageCompaniesView />;
 }

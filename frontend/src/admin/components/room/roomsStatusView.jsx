@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import AdminAlert from "@/admin/components/ui/AdminAlert";
+import { useEffect } from "react";
+import AdminErrorModal from "@/admin/components/ui/AdminErrorModal";
+import { useAdminErrorModal } from "@/admin/hooks/useAdminErrorModal";
 import { useRooms } from "@/admin/hooks/useRooms";
 import Spinner from "@/shared/globalComponents/ui/spinner/Spinner";
 
@@ -15,32 +16,27 @@ const ROOM_STATUSES = [
 
 export default function RoomStatusView() {
   const { rooms, loading, error, handleUpdateStatus } = useRooms();
-  const [statusError, setStatusError] = useState(null);
+  const { errorModal, showError, closeError } = useAdminErrorModal();
+
+  useEffect(() => {
+    if (error) showError(error);
+  }, [error, showError]);
 
   const onStatusChange = async (roomId, newStatus) => {
-    setStatusError(null);
+    const room = rooms.find((r) => r.id === roomId);
     try {
       await handleUpdateStatus(roomId, newStatus);
     } catch (err) {
-      setStatusError(
-        err instanceof Error ? err.message : "No se pudo cambiar el estado."
-      );
+      showError(err instanceof Error ? err.message : "No se pudo cambiar el estado.", {
+        numero: room?.room_number,
+      });
     }
   };
 
   return (
     <section className="space-y-6">
-      <h1 className="text-2xl font-semibold text-emerald-900">
-        Gestionar estado de habitación
-      </h1>
-      <p className="text-sm text-gray-600">
-        Cambia el estado operativo de cada habitación.
-      </p>
-
-      <AdminAlert
-        message={error || statusError}
-        onDismiss={() => setStatusError(null)}
-      />
+      <h1 className="text-2xl font-semibold text-emerald-900">Gestionar estado de habitación</h1>
+      <p className="text-sm text-gray-600">Cambia el estado operativo de cada habitación.</p>
 
       {loading ? (
         <p className="flex items-center gap-2 text-sm text-gray-500">
@@ -57,12 +53,8 @@ export default function RoomStatusView() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-white p-4 shadow-sm"
             >
               <div>
-                <p className="font-medium text-emerald-900">
-                  Habitación {room.room_number}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {room.description || "Sin descripción"}
-                </p>
+                <p className="font-medium text-emerald-900">Habitación {room.room_number}</p>
+                <p className="text-sm text-gray-500">{room.description || "Sin descripción"}</p>
               </div>
               <select
                 value={room.status}
@@ -79,6 +71,8 @@ export default function RoomStatusView() {
           ))}
         </ul>
       )}
+
+      <AdminErrorModal open={!!errorModal} onClose={closeError} {...errorModal} />
     </section>
   );
 }

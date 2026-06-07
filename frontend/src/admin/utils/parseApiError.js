@@ -1,18 +1,20 @@
-/**
- * Traduce respuestas de error del backend (FastAPI) a mensajes en español.
- */
 const MESSAGE_MAP = {
-  "Company NIT already registered": "El NIT ya está registrado. Verifica el número o consulta la empresa existente.",
+  "Company NIT already registered":
+    "El NIT ya está registrado. Verifica el número o consulta la empresa existente.",
   "Room number already exists": "Ese número de habitación ya existe. Usa otro número.",
   "Room not found": "La habitación no fue encontrada.",
   "Company not found": "La empresa no fue encontrada.",
-  "Error al obtener habitaciones": "No se pudo cargar el listado de habitaciones. Intenta de nuevo.",
-  "Error al obtener empresas": "No se pudo cargar el listado de empresas. Intenta de nuevo.",
-  "Error al crear habitación": "No se pudo registrar la habitación.",
-  "Error al registrar empresa": "No se pudo registrar la empresa.",
-  "Error al cambiar estado de la habitación": "No se pudo actualizar el estado de la habitación.",
-  "El endpoint de facturación mensual aún no está disponible":
-    "La generación de facturas mensuales aún no está disponible en el sistema.",
+  "Invoice not found": "La factura no fue encontrada.",
+  "No active contract found for company":
+    "No hay un contrato vigente asociado a la empresa para el periodo seleccionado.",
+  "No billable reservations found for selected period":
+    "No se puede generar la factura: debe existir al menos una reserva registrada en el periodo y un contrato vigente.",
+  "Only pending invoices can be cancelled":
+    "Solo se pueden cancelar facturas en estado pendiente de pago.",
+  "Error al obtener habitaciones": "No se pudo cargar el listado de habitaciones.",
+  "Error al obtener empresas": "No se pudo cargar el listado de empresas.",
+  "Error al obtener facturas": "No se pudo cargar el historial de facturación.",
+  "Error al generar la factura mensual": "No se pudo generar la factura mensual.",
 };
 
 const FIELD_LABELS = {
@@ -25,21 +27,22 @@ const FIELD_LABELS = {
   address: "Dirección",
   phone: "Teléfono",
   email: "Correo",
+  company_id: "Empresa",
+  period_start: "Inicio del periodo",
+  period_end: "Fin del periodo",
 };
 
 function translateDetail(detail) {
   if (!detail) return null;
-  if (typeof detail === "string") {
-    return MESSAGE_MAP[detail] ?? detail;
-  }
+  if (typeof detail === "string") return MESSAGE_MAP[detail] ?? detail;
   if (Array.isArray(detail)) {
-    const lines = detail.map((item) => {
-      const field = item?.loc?.slice(-1)?.[0];
-      const label = FIELD_LABELS[field] ?? field ?? "campo";
-      const msg = item?.msg ?? "valor inválido";
-      return `${label}: ${msg}`;
-    });
-    return lines.join(" · ");
+    return detail
+      .map((item) => {
+        const field = item?.loc?.slice(-1)?.[0];
+        const label = FIELD_LABELS[field] ?? field ?? "campo";
+        return `${label}: ${item?.msg ?? "valor inválido"}`;
+      })
+      .join(" · ");
   }
   return null;
 }
@@ -51,7 +54,6 @@ export function parseApiError(data, fallback) {
   return fallback;
 }
 
-/** Validaciones antes de llamar al API (formularios admin). */
 export function validateRoomForm({ numero, descripcion }) {
   const trimmed = (numero ?? "").trim();
   if (!trimmed) return "El número de habitación es obligatorio.";
@@ -75,12 +77,29 @@ export function validateCompanyForm(form) {
   if (!(form.representante ?? "").trim()) {
     return "El representante legal es obligatorio.";
   }
-  if ((form.representante ?? "").trim().length < 5) {
-    return "El representante legal debe tener al menos 5 caracteres.";
+  const email = (form.correo ?? "").trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return "El correo electrónico no es válido.";
+  }
+  return null;
+}
+
+export function validateCompanyUpdateForm(form) {
+  if (!(form.representante ?? "").trim()) {
+    return "El representante legal es obligatorio.";
   }
   const email = (form.correo ?? "").trim();
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return "El correo electrónico no es válido.";
   }
+  return null;
+}
+
+export function validateInvoiceForm({ empresaId, mes, anio }) {
+  if (!empresaId) return "Debes seleccionar una empresa.";
+  const mesNum = Number(mes);
+  const anioNum = Number(anio);
+  if (mesNum < 1 || mesNum > 12) return "El mes debe estar entre 1 y 12.";
+  if (anioNum < 2000) return "El año no es válido.";
   return null;
 }

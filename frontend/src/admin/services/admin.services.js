@@ -1,9 +1,13 @@
 import { API_URL } from "@/shared/API/api";
 import { parseApiError } from "@/admin/utils/parseApiError";
+import { getMonthPeriod } from "@/admin/utils/period";
+import { getAllInvoices } from "@/shared/serviceGlobal/billing.services";
 
-function authHeaders() {
+function authHeaders(json = false) {
   const token = localStorage.getItem("access_token");
-  return { Authorization: `Bearer ${token}` };
+  const headers = { Authorization: `Bearer ${token}` };
+  if (json) headers["Content-Type"] = "application/json";
+  return headers;
 }
 
 async function parseResponse(response, fallbackError) {
@@ -13,6 +17,7 @@ async function parseResponse(response, fallbackError) {
   }
   return data;
 }
+
 
 // ─── ROOMS ───────────────────────────────────────────────────────────────────
 
@@ -79,10 +84,46 @@ export async function deleteRoom(roomId) {
 
 export async function getAllCompanies() {
   const response = await fetch(`${API_URL}/companies/`, {
+    headers: authHeaders(),
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error("Error al obtener empresas");
+  return data;
+}
+
+export async function getCompanyById(companyId) {
+  const response = await fetch(`${API_URL}/companies/${companyId}`, {
     method: "GET",
     headers: authHeaders(),
   });
-  return parseResponse(response, "Error al obtener empresas");
+  return parseResponse(response, "Error al obtener la empresa");
+}
+export async function updateCompany(companyId, companyData) {
+  const body = new FormData();
+  if (companyData.nombre) body.append("name", companyData.nombre);
+  if (companyData.representante) {
+    body.append("company_representative", companyData.representante);
+  }
+  if (companyData.direccion !== undefined) {
+    body.append("address", companyData.direccion || "");
+  }
+  if (companyData.telefono !== undefined) {
+    body.append("phone", companyData.telefono || "");
+  }
+  if (companyData.correo !== undefined) {
+    body.append("email", companyData.correo || "");
+  }
+  if (companyData.activo !== undefined) {
+    body.append("is_active", String(companyData.activo));
+  }
+  // NIT no se envía: no es editable
+
+  const response = await fetch(`${API_URL}/companies/${companyId}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body,
+  });
+  return parseResponse(response, "Error al actualizar la empresa");
 }
 
 export async function createCompany(companyData) {
@@ -102,39 +143,48 @@ export async function createCompany(companyData) {
   return parseResponse(response, "Error al registrar empresa");
 }
 
-// ─── BILLING ─────────────────────────────────────────────────────────────────
 
-export async function getBillingHistory() {
-  return [];
+
+// ─── CONTRACTS (preflight opcional) ─────────────────────────────────────────
+export async function getCompanyContracts(companyId) {
+  const response = await fetch(`${API_URL}/contracts/company/${companyId}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  return parseResponse(response, "Error al consultar contratos de la empresa");
+}
+export function hasActiveContractInPeriod(contracts, periodStart, periodEnd) {
+  const start = new Date(`${periodStart}T00:00:00`);
+  const end = new Date(`${periodEnd}T23:59:59`);
+  return (contracts ?? []).some((c) => {
+    if (!c.is_active) return false;
+    const cs = new Date(`${c.start_date}T00:00:00`);
+    const ce = new Date(`${c.end_date}T23:59:59`);
+    return cs <= end && ce >= start;
+  });
 }
 
-export async function generateMonthlyInvoice({ empresaId, mes, anio }) {
-  void empresaId;
-  void mes;
-  void anio;
-  throw new Error(
-    "La generación de facturas mensuales aún no está disponible en el sistema."
-  );
-}
-
-// ─── Solo admin (métricas habitaciones/empresas) ───────────────────────────────
+// ─── ADMIN SUMMARY ────────────────────────────────────────────────────────────
 
 export async function getAdminSummary() {
   try {
-    const [rooms, companies] = await Promise.all([
+    const [rooms, companies, invoices] = await Promise.all([
       getAllRooms(),
       getAllCompanies(),
+      getAllInvoices(),
     ]);
-
     const disponibles = rooms.filter((r) => r.status === "AVAILABLE").length;
     const empresasActivas = companies.filter((c) => c.is_active).length;
-
+    const facturasPendientes = invoices.filter(
+      (i) => i.invoice_status === "PENDING"
+    ).length;
     return {
       totalHabitaciones: rooms.length,
       habitacionesDisponibles: disponibles,
       totalEmpresas: companies.length,
       empresasActivas,
-      facturasRegistradas: 0,
+      facturasRegistradas: invoices.length,
+      facturasPendientesPago: facturasPendientes,
     };
   } catch {
     return {
@@ -143,6 +193,34 @@ export async function getAdminSummary() {
       totalEmpresas: 0,
       empresasActivas: 0,
       facturasRegistradas: 0,
+      facturasPendientesPago: 0,
     };
   }
+}
+
+
+// ─── BILLING ─────────────────────────────────────────────────────────────────
+
+export async function getBillingHistory() {
+  // TODO: conectar cuando exista GET /billing/
+  return [];
+}
+
+export async function generateMonthlyInvoice({ empresaId, mes, anio }) {
+  const paddedMes = String(mes).padStart(2, "0");
+  const lastDay = new Date(anio, mes, 0).getDate();
+  const period_start = `${anio}-${paddedMes}-01`;
+  const period_end = `${anio}-${paddedMes}-${lastDay}`;
+
+  const body = new FormData();
+  body.append("company_id", empresaId);
+  body.append("period_start", period_start);
+  body.append("period_end", period_end);
+
+  const response = await fetch(`${API_URL}/invoices/generate`, {
+    method: "POST",
+    headers: authHeaders(),
+    body,
+  });
+  return parseResponse(response, "Error al generar la factura mensual"); // ← usa parseResponse
 }

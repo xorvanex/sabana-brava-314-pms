@@ -1,34 +1,27 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  getBillingHistory,
-  generateMonthlyInvoice,
   getAllCompanies,
+  generateMonthlyInvoice,
+  getBillingHistory,
 } from "@/admin/services/admin.services";
 
 export function useBilling() {
-  const [invoices, setInvoices] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     async function load() {
       try {
-        setLoading(true);
-        const [billing, comps] = await Promise.all([
-          getBillingHistory(),
+        const [companiesData, invoicesData] = await Promise.all([
           getAllCompanies(),
+          getBillingHistory(),
         ]);
-        setInvoices(billing);
-        setCompanies(comps);
+        setCompanies(companiesData);
+        setInvoices(invoicesData);
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "No se pudo cargar la información de facturación."
-        );
+        setError(err instanceof Error ? err.message : "Error al cargar datos de facturación");
       } finally {
         setLoading(false);
       }
@@ -36,17 +29,10 @@ export function useBilling() {
     load();
   }, []);
 
-  const handleGenerate = async (payload) => {
-    setError(null);
-    try {
-      return await generateMonthlyInvoice(payload);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "No se pudo generar la factura.";
-      setError(message);
-      throw new Error(message);
-    }
+  const handleGenerate = async ({ empresaId, mes, anio }) => {
+    const invoice = await generateMonthlyInvoice({ empresaId, mes, anio });
+    return invoice;
   };
 
-  return { invoices, companies, loading, error, handleGenerate };
+  return { companies, invoices, loading, error, handleGenerate };
 }
