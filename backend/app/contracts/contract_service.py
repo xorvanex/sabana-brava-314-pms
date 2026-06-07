@@ -1,6 +1,11 @@
-# File path: backend/app/contracts/contract_service.py
+"""
+Contract business logic module.
 
-# Start file:
+This module contains validation rules and business operations
+related to contract management.
+"""
+
+# File path: backend/app/contracts/contract_service.py
 
 from datetime import date, datetime
 from types import SimpleNamespace
@@ -10,11 +15,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import (
-    contract_repository,
-    contract_scheme
-)
-
+from . import contract_repository, contract_scheme
 from app.companies import company_repository
 from .contract_pdf_generator import (
     generate_contract_pdf as create_contract_pdf,
@@ -22,6 +23,7 @@ from .contract_pdf_generator import (
 )
 
 
+# Availability Validation Operations
 def validate_contract_rooms(
     db: Session,
     room_ids: list[UUID],
@@ -29,6 +31,12 @@ def validate_contract_rooms(
     start_date: date | None = None,
     end_date: date | None = None
 ) -> None:
+    """
+    Validate room availability for contract assignment.
+
+    Ensures rooms are active, unique, and not assigned to other
+    active contracts with overlapping dates.
+    """
     if not room_ids:
         return
 
@@ -81,10 +89,12 @@ def validate_contract_rooms(
         )
 
 
+# Contract Creation Operations
 def generate_contract_number(db: Session) -> str:
+    """Generate unique contract number with year and sequential ID."""
     current_year = datetime.now().year
     total_contracts = len(contract_repository.get_all_contracts(db)) + 1
-    
+
     return f"CTR-{current_year}-{total_contracts:05d}"
 
 
@@ -92,33 +102,32 @@ def create_contract(
     db: Session,
     contract_in: contract_scheme.ContractCreate
 ) -> dict:
-    # Validate company existence
-    company = company_repository.get_company_by_id(
-        db,
-        contract_in.company_id
-    )
+    """
+    Create new contract with company and room validation.
+
+    Validates company existence, status, date range, and absence
+    of overlapping contracts before creating the contract.
+    """
+    company = company_repository.get_company_by_id(db, contract_in.company_id)
 
     if not company:
         raise HTTPException(
             status_code=404,
             detail="Company not found"
         )
-    
-    # Validate company status
+
     if not bool(company.is_active):
         raise HTTPException(
             status_code=400,
             detail="Company is inactive"
         )
-    
-    # Validate date range
+
     if contract_in.end_date <= contract_in.start_date:
         raise HTTPException(
             status_code=400,
             detail="Contract end date must be greater than start date"
         )
 
-    # Validate contract date overlap
     if contract_repository.check_overlapping_contracts(
         db,
         contract_in.company_id,
@@ -130,7 +139,6 @@ def create_contract(
             detail="Company already has an active contract with overlapping dates"
         )
 
-    # Generate unique contract number
     contract_number = generate_contract_number(db)
 
     validate_contract_rooms(
@@ -139,12 +147,10 @@ def create_contract(
         start_date=contract_in.start_date,
         end_date=contract_in.end_date
     )
-    
-    # Prepare data for persistence
+
     contract_data = contract_in.model_dump(exclude={"room_ids"})
     contract_data["contract_number"] = contract_number
-    
-    # Persist contract data
+
     return contract_repository.create_contract(
         db,
         contract_data,
@@ -156,10 +162,8 @@ def preview_contract_pdf(
     db: Session,
     contract_in: contract_scheme.ContractCreate
 ):
-    company = company_repository.get_company_by_id(
-        db,
-        contract_in.company_id
-    )
+    """Generate PDF preview for contract before creation."""
+    company = company_repository.get_company_by_id(db, contract_in.company_id)
 
     if not company:
         raise HTTPException(
@@ -197,18 +201,9 @@ def preview_contract_pdf(
         end_date=contract_in.end_date
     )
 
-    rooms = contract_repository.get_rooms_by_ids(
-        db,
-        contract_in.room_ids
-    )
-    rooms_by_id = {
-        cast(UUID, room.id): room
-        for room in rooms
-    }
-    ordered_rooms = [
-        rooms_by_id[room_id]
-        for room_id in contract_in.room_ids
-    ]
+    rooms = contract_repository.get_rooms_by_ids(db, contract_in.room_ids)
+    rooms_by_id = {cast(UUID, room.id): room for room in rooms}
+    ordered_rooms = [rooms_by_id[room_id] for room_id in contract_in.room_ids]
 
     preview_contract = SimpleNamespace(
         contract_number="PREVIEW",
@@ -221,20 +216,13 @@ def preview_contract_pdf(
         rooms=ordered_rooms
     )
 
-    return create_contract_preview_pdf(
-        preview_contract,
-        company
-    )
+    return create_contract_preview_pdf(preview_contract, company)
 
 
-def get_contract_by_id(
-    db: Session,
-    contract_id: UUID
-) -> dict:
-    contract = contract_repository.get_contract_by_id(
-        db,
-        contract_id
-    )
+# Contract Retrieval Operations
+def get_contract_by_id(db: Session, contract_id: UUID) -> dict:
+    """Retrieve contract by ID with relationships."""
+    contract = contract_repository.get_contract_by_id(db, contract_id)
 
     if not contract:
         raise HTTPException(
@@ -246,19 +234,23 @@ def get_contract_by_id(
 
 
 def get_all_contracts(db: Session) -> list:
+    """Retrieve all contracts."""
     return contract_repository.get_all_contracts(db)
 
 
+# Contract Update Operations
 def update_contract(
     db: Session,
     contract_id: UUID,
     contract_in: contract_scheme.ContractUpdate
 ) -> dict:
-    # Get existing contract
-    contract = contract_repository.get_contract_by_id(
-        db,
-        contract_id
-    )
+    """
+    Update contract with date and room validation.
+
+    Validates date range and checks for conflicts with other
+    contracts before applying updates.
+    """
+    contract = contract_repository.get_contract_by_id(db, contract_id)
 
     if not contract:
         raise HTTPException(
@@ -266,25 +258,15 @@ def update_contract(
             detail="Contract not found"
         )
 
-    # Resolve final dates from update data
-    new_start_date = cast(
-        date,
-        contract_in.start_date or contract.start_date
-    )
+    new_start_date = cast(date, contract_in.start_date or contract.start_date)
+    new_end_date = cast(date, contract_in.end_date or contract.end_date)
 
-    new_end_date = cast(
-        date,
-        contract_in.end_date or contract.end_date
-    )
-
-    # Validate date range
     if new_end_date <= new_start_date:
         raise HTTPException(
             status_code=400,
             detail="Invalid contract date range"
         )
-    
-    # Validate conflicts with other contracts
+
     if contract_repository.check_overlapping_contracts(
         db,
         cast(UUID, contract.company_id),
@@ -296,13 +278,9 @@ def update_contract(
             status_code=400,
             detail="Updated contract dates overlap with existing contract"
         )
-    
-    # Prepare update data
+
     room_ids = contract_in.room_ids
-    update_data = contract_in.model_dump(
-        exclude={"room_ids"},
-        exclude_none=True
-    )
+    update_data = contract_in.model_dump(exclude={"room_ids"}, exclude_none=True)
 
     final_is_active = bool(update_data.get("is_active", contract.is_active))
 
@@ -315,7 +293,6 @@ def update_contract(
                 for contract_room in contract.contract_rooms
             ]
 
-        # Pass calculated dates to validate even when room_ids unchanged
         validate_contract_rooms(
             db,
             rooms_to_validate,
@@ -332,14 +309,9 @@ def update_contract(
     )
 
 
-def toggle_contract_status(
-    db: Session,
-    contract_id: UUID
-) -> dict:
-    contract = contract_repository.get_contract_by_id(
-        db,
-        contract_id
-    )
+def toggle_contract_status(db: Session, contract_id: UUID) -> dict:
+    """Toggle contract active/inactive status with room validation."""
+    contract = contract_repository.get_contract_by_id(db, contract_id)
 
     if not contract:
         raise HTTPException(
@@ -347,7 +319,6 @@ def toggle_contract_status(
             detail="Contract not found"
         )
 
-    # Toggle current status
     new_status = not bool(contract.is_active)
 
     if new_status:
@@ -369,25 +340,18 @@ def toggle_contract_status(
     )
 
 
-def get_company_contracts(
-    db: Session,
-    company_id: UUID
-) -> list:
+# Room Assignment Operations
+def get_company_contracts(db: Session, company_id: UUID) -> list:
+    """Retrieve all contracts for a specific company."""
     return contract_repository.get_company_contracts(db, company_id)
 
 
 def get_active_contracts(db: Session) -> list:
+    """Retrieve all active contracts."""
     return contract_repository.get_active_contracts(db)
 
 
-def generate_contract_pdf(
-    db: Session,
-    contract_id: UUID
-):
-    return create_contract_pdf(
-        db,
-        contract_id,
-        contract_repository
-    )
-
-# End file:
+# Business Validation Operations
+def generate_contract_pdf(db: Session, contract_id: UUID):
+    """Generate PDF document for contract."""
+    return create_contract_pdf(db, contract_id, contract_repository)

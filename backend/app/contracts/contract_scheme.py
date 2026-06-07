@@ -1,6 +1,11 @@
-# File path: backend/app/contracts/contract_scheme.py
+"""
+Contract schema definitions module.
 
-# Start file:
+This module provides Pydantic schemas for contract data validation
+and API responses.
+"""
+
+# File path: backend/app/contracts/contract_scheme.py
 
 from uuid import UUID
 from datetime import date
@@ -11,9 +16,9 @@ from pydantic import BaseModel, Field
 
 from app.companies.company_scheme import CompanyBasicResponse
 
-# Schema for contract creation
-class ContractCreate(BaseModel):
 
+# Create Schemas
+class ContractCreate(BaseModel):
     company_id: UUID
 
     start_date: date
@@ -23,15 +28,13 @@ class ContractCreate(BaseModel):
 
     description: Optional[str] = Field(None, max_length=5000)
 
-    # Contract legal/business agreements
     terms: str = Field(..., min_length=10, max_length=5000)
 
     room_ids: list[UUID] = Field(default_factory=list)
 
 
-# Schema for contract updates
+# Update Schemas
 class ContractUpdate(BaseModel):
-
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 
@@ -45,8 +48,8 @@ class ContractUpdate(BaseModel):
     room_ids: Optional[list[UUID]] = None
 
 
+# Response Schemas
 class ContractRoomResponse(BaseModel):
-
     id: UUID
     room_number: str
     description: Optional[str]
@@ -58,15 +61,11 @@ class ContractRoomResponse(BaseModel):
         from_attributes = True
 
 
-# Schema for contract API responses
 class ContractResponse(BaseModel):
-
     id: UUID
-    
+
     contract_number: str
 
-    # Nested company information
-    # Improves frontend readability and UX
     company: CompanyBasicResponse
 
     start_date: date
@@ -83,5 +82,3 @@ class ContractResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-# End file:

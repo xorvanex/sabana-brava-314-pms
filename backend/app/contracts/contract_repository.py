@@ -1,10 +1,14 @@
-# File path: backend/app/contracts/contract_repository.py
+"""
+Contract database operations module.
 
-# Start file:
+This module provides database operations for contract management,
+including room assignment and availability queries.
+"""
+
+# File path: backend/app/contracts/contract_repository.py
 
 from datetime import date
 from typing import cast
-
 from uuid import UUID
 
 from sqlalchemy.orm import Session, joinedload
@@ -14,14 +18,9 @@ from .contract_model import Contract, ContractRoom
 from app.rooms.room_model import Room
 
 
-# Retrieve contract by ID
-def get_contract_by_id(
-    db: Session,
-    contract_id: UUID
-) -> Contract | None:
-
-    # joinedload optimization:
-    # Loads related company in same query
+# Read Operations
+def get_contract_by_id(db: Session, contract_id: UUID) -> Contract | None:
+    """Retrieve contract with relationships for response construction."""
     return (
         db.query(Contract)
         .options(
@@ -34,9 +33,8 @@ def get_contract_by_id(
     )
 
 
-# Retrieve all contracts
 def get_all_contracts(db: Session):
-
+    """Retrieve all contracts with relationships."""
     return (
         db.query(Contract)
         .options(
@@ -48,12 +46,8 @@ def get_all_contracts(db: Session):
     )
 
 
-# Retrieve actives contract by company
-def get_company_active_contracts(
-    db: Session,
-    company_id: UUID
-):
-
+def get_company_active_contracts(db: Session, company_id: UUID):
+    """Retrieve active contracts for a specific company."""
     return (
         db.query(Contract)
         .filter(
@@ -63,12 +57,9 @@ def get_company_active_contracts(
         .all()
     )
 
-# Retrieve latest active contract by company
-def get_latest_active_contract_by_company(
-    db: Session,
-    company_id: UUID
-) -> Contract | None:
 
+def get_latest_active_contract_by_company(db: Session, company_id: UUID) -> Contract | None:
+    """Retrieve the most recent active contract for a company."""
     return (
         db.query(Contract)
         .filter(
@@ -79,8 +70,9 @@ def get_latest_active_contract_by_company(
         .first()
     )
 
-# Retrieve contracts by company
+
 def get_company_contracts(db: Session, company_id: UUID):
+    """Retrieve all contracts for a specific company."""
     return (
         db.query(Contract)
         .filter(Contract.company_id == company_id)
@@ -93,8 +85,8 @@ def get_company_contracts(db: Session, company_id: UUID):
     )
 
 
-# Retrieve active contracts
 def get_active_contracts(db: Session):
+    """Retrieve all active contracts."""
     return (
         db.query(Contract)
         .filter(Contract.is_active == True)
@@ -106,13 +98,10 @@ def get_active_contracts(db: Session):
         .all()
     )
 
-# Create new contract record
-def create_contract(
-    db: Session,
-    contract_data: dict,
-    room_ids: list[UUID] | None = None
-) -> Contract:
 
+# Create Operations
+def create_contract(db: Session, contract_data: dict, room_ids: list[UUID] | None = None) -> Contract:
+    """Create new contract with assigned rooms."""
     new_contract = Contract(**contract_data)
 
     db.add(new_contract)
@@ -131,21 +120,17 @@ def create_contract(
     return get_contract_by_id(db, cast(UUID, new_contract.id))
 
 
-# Update existing contract
+# Update Operations
 def update_contract(
     db: Session,
     contract_id: UUID,
     contract_data: dict,
     room_ids: list[UUID] | None = None
 ) -> Contract | None:
-
-    contract = get_contract_by_id(
-        db,
-        contract_id
-    )
+    """Update existing contract and reassign rooms if specified."""
+    contract = get_contract_by_id(db, contract_id)
 
     if contract:
-
         for key, value in contract_data.items():
             setattr(contract, key, value)
 
@@ -167,6 +152,8 @@ def update_contract(
 
     return contract
 
+
+# Room Assignment Queries
 def check_overlapping_contracts(
     db: Session,
     company_id: UUID,
@@ -175,38 +162,26 @@ def check_overlapping_contracts(
     exclude_contract_id: UUID | None = None
 ) -> bool:
     """
-    Check if there are contracts with overlapping periods for a company.
-    
-    Args:
-        db: BD Session
-        company_id: Company ID
-        start_date: Start date of the new contract
-        end_date: End date of the new contract
-        exclude_contract_id: Contract ID to exclude (for updates)
-        
-    Returns:
-        True if there is overlap, False if there is no
+    Validate contract dates before room allocation.
+
+    Prevents rooms from being assigned to multiple active contracts
+    with overlapping validity periods.
     """
     query = db.query(Contract).filter(
         Contract.company_id == company_id,
         Contract.is_active == True,
-        # Overlap logic:
-        # Two periods overlap if:
-        # start_date_new < end_date_existing AND end_date_new > start_date_existing
         Contract.start_date < end_date,
         Contract.end_date > start_date
     )
-    
+
     if exclude_contract_id:
         query = query.filter(Contract.id != exclude_contract_id)
-    
+
     return query.first() is not None
 
 
-def get_rooms_by_ids(
-    db: Session,
-    room_ids: list[UUID]
-) -> list[Room]:
+def get_rooms_by_ids(db: Session, room_ids: list[UUID]) -> list[Room]:
+    """Retrieve rooms by their IDs."""
     if not room_ids:
         return []
 
@@ -224,6 +199,12 @@ def get_rooms_assigned_to_active_contracts(
     start_date: date | None = None,
     end_date: date | None = None
 ) -> list[Room]:
+    """
+    Ensure assigned rooms remain available during the contract term.
+
+    Excludes contracts outside the requested period to prevent
+    conflicts with room exclusivity rules.
+    """
     if not room_ids:
         return []
 
@@ -240,8 +221,6 @@ def get_rooms_assigned_to_active_contracts(
     if exclude_contract_id:
         query = query.filter(Contract.id != exclude_contract_id)
 
-    # Validation: filter contracts with overlapping dates
-    # Both dates must be provided from contracts
     if start_date is not None and end_date is not None:
         query = query.filter(
             Contract.start_date <= end_date,
@@ -249,5 +228,3 @@ def get_rooms_assigned_to_active_contracts(
         )
 
     return query.all()
-
-# End file:
