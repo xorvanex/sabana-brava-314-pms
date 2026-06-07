@@ -1,15 +1,17 @@
 # File path: backend/app/main.py
 
-# Start file:
+"""
+Application entry point for Hotel Sabana Brava 314 API.
 
-# Application Entry Point:
-# - Initializes FastAPI application
-# - Configures middleware
-# - Registers API routers
-# - Exposes root endpoints
+Initializes FastAPI application, configures middleware, registers API routers,
+and exposes root endpoints.
+"""
 
+# Third-party imports
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Local application imports
 from app.users.user_router import router as user_router
 from app.companies.company_router import router as company_router
 from app.contracts.contract_router import router as contract_router
@@ -18,10 +20,16 @@ from app.reservations.reservation_router import router as reservation_router
 from app.guests.guest_router import router as guest_router
 from app.invoices.invoice_router import router as invoice_router
 
-# FastAPI application initialization
+# ============================================================================
+# Application Configuration
+# ============================================================================
+
 app = FastAPI(title="Hotel Sabana Brava 314")
 
-# CORS configuration for API access control
+# ============================================================================
+# Middleware Registration
+# ============================================================================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,7 +38,10 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# Register user-related routes
+# ============================================================================
+# Router Registration
+# ============================================================================
+
 app.include_router(user_router)
 app.include_router(company_router)
 app.include_router(contract_router)
@@ -39,9 +50,10 @@ app.include_router(reservation_router)
 app.include_router(guest_router)
 app.include_router(invoice_router)
 
-# Health check endpoint
+# ============================================================================
+# Application Instance
+# ============================================================================
+
 @app.get("/")
 def root():
     return {"Mensaje": "API Hotel funcionando correctamente"}
-
-# End file:
