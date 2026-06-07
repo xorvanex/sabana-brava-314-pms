@@ -180,7 +180,7 @@ class Reservation(Base):
 
     invoice = relationship(
         "Invoice",
-        back_populates="invoices"
+        back_populates="reservations",
     )
 
     # Rooms assigned to this reservation through the association table
