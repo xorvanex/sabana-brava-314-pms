@@ -1,47 +1,55 @@
 "use client";
 
-import AdminAlert from "@/admin/components/ui/AdminAlert";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import AdminErrorModal from "@/admin/components/ui/AdminErrorModal";
+import AdminInfoBanner from "@/admin/components/ui/AdminInfoBanner";
+import AdminSuccessBanner from "@/admin/components/ui/AdminSuccessBanner";
+import { useAdminErrorModal } from "@/admin/hooks/useAdminErrorModal";
+import { validateInvoiceForm } from "@/admin/utils/parseApiError";
+import { formatInvoiceStatus } from "@/admin/utils/formatLabels";
 import { useBilling } from "@/admin/hooks/useBilling";
 import Button from "@/shared/globalComponents/ui/button/Button";
 import Spinner from "@/shared/globalComponents/ui/spinner/Spinner";
 
 export default function GenerateInvoiceView() {
-
-  const { companies, loading, handleGenerate } = useBilling();
+  const { companies, loading, error, handleGenerate } = useBilling();
+  const { errorModal, showError, closeError } = useAdminErrorModal();
   const [empresaId, setEmpresaId] = useState("");
   const [mes, setMes] = useState(String(new Date().getMonth() + 1));
   const [anio, setAnio] = useState(String(new Date().getFullYear()));
-  const [message, setMessage] = useState(null);
-  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (error) showError(error);
+  }, [error, showError]);
+
+  const selectedCompany = companies.find((c) => c.id === empresaId);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null);
-    setError(null);
-    setSaving(true);
+    setSuccess(null);
 
-    if (!empresaId) {
-      setError("Debes seleccionar una empresa.");
+    const validationError = validateInvoiceForm({ empresaId, mes, anio });
+    if (validationError) {
+      showError(validationError, { companyName: selectedCompany?.name });
       return;
     }
-    const mesNum = Number(mes);
-    const anioNum = Number(anio);
-    if (mesNum < 1 || mesNum > 12) {
-      setError("El mes debe estar entre 1 y 12.");
-      return;
-    }
-    if (anioNum < 2000) {
-      setError("El año no es válido.");
-      return;
-    }
-    
+
+    setSaving(true);
     try {
-      await handleGenerate({ empresaId, mes: Number(mes), anio: Number(anio) });
-      setMessage("Factura generada correctamente.");
+      const invoice = await handleGenerate({
+        empresaId,
+        mes: Number(mes),
+        anio: Number(anio),
+      });
+      setSuccess(
+        `Factura ${invoice.invoice_number} generada. Estado: ${formatInvoiceStatus(invoice.invoice_status)}.`
+      );
     } catch (err) {
-      setError(err.message);
+      showError(err instanceof Error ? err.message : "No se pudo generar la factura.", {
+        companyName: selectedCompany?.name,
+      });
     } finally {
       setSaving(false);
     }
@@ -50,13 +58,20 @@ export default function GenerateInvoiceView() {
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold text-emerald-900">Generar factura mensual</h1>
-      <p className="text-sm text-gray-600">
-        Genera la facturación mensual por empresa contratante.
-      </p>
+
+      <AdminInfoBanner>
+        Requisitos: al menos una reserva en el mes y un contrato vigente. Las facturas nuevas deben quedar en estado{" "}
+        <strong>pendiente de pago</strong> (<code>PENDING</code> en API).
+      </AdminInfoBanner>
 
       <div className="max-w-lg rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
+        <AdminSuccessBanner message={success} onDismiss={() => setSuccess(null)} />
+
         {loading ? (
-          <p className="text-sm text-gray-500">Cargando empresas...</p>
+          <p className="flex items-center gap-2 text-sm text-gray-500">
+            <Spinner />
+            Cargando empresas...
+          </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -75,6 +90,7 @@ export default function GenerateInvoiceView() {
                 ))}
               </select>
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700">Mes</label>
@@ -100,16 +116,7 @@ export default function GenerateInvoiceView() {
                 />
               </div>
             </div>
-            {error && (
-              <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
-              </p>
-            )}
-            {message && (
-              <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                {message}
-              </p>
-            )}
+
             <Button type="submit" disabled={saving}>
               {saving ? (
                 <span className="flex items-center gap-2">
@@ -123,6 +130,8 @@ export default function GenerateInvoiceView() {
           </form>
         )}
       </div>
+
+      <AdminErrorModal open={!!errorModal} onClose={closeError} {...errorModal} />
     </section>
   );
 }
