@@ -1,24 +1,24 @@
 # File path: backend/app/guests/guest_scheme.py
 
-# Start file:
+"""
+Guest schema definitions module.
+
+This module provides Pydantic schemas for guest data validation
+and API responses.
+"""
 
 from uuid import UUID
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from .guest_model import (
     GuestGenderEnum,
     DocumentTypeEnum
-)   
+)
 
-
-# =========================================================
-# SCHEMA: GuestCreate
-# =========================================================
 
 class GuestCreate(BaseModel):
-
     company_id: UUID
 
     first_name: str = Field(
@@ -49,12 +49,7 @@ class GuestCreate(BaseModel):
     )
 
 
-# =========================================================
-# SCHEMA: GuestUpdate
-# =========================================================
-
 class GuestUpdate(BaseModel):
-
     first_name: Optional[str] = Field(
         None,
         min_length=1,
@@ -83,40 +78,21 @@ class GuestUpdate(BaseModel):
     )
 
 
-# =========================================================
-# SCHEMA: GuestCompanyResponse
-# =========================================================
-
 class GuestCompanyResponse(BaseModel):
-
     id: UUID
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-
-# =========================================================
-# SCHEMA: GuestResponse
-# =========================================================
 
 class GuestResponse(BaseModel):
-
     id: UUID
-
     company: GuestCompanyResponse
-
     first_name: str
     last_name: str
-
     document_type: DocumentTypeEnum
     document_number: str
-
     gender: GuestGenderEnum
-
     phone: Optional[str]
 
-    class Config:
-        from_attributes = True
-
-# End file:
+    model_config = ConfigDict(from_attributes=True)

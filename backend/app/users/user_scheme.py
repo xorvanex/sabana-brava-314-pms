@@ -1,15 +1,21 @@
 # File path: backend/app/users/user_scheme.py
 
-# Start file:
+"""
+User schema definitions module.
 
-from pydantic import BaseModel, EmailStr, Field
+This module provides Pydantic schemas for user data validation
+and API responses.
+"""
+
 from uuid import UUID
 from typing import Optional
 
-from app.users.user_model import UserRoleEnum
+from pydantic import BaseModel, EmailStr, Field
+
+from .user_model import UserRoleEnum
 
 
-# Schema for creating a receptionist user
+# Schema for creating a new receptionist account
 class ReceptionistCreate(BaseModel):
     name: str
     email: EmailStr
@@ -17,19 +23,19 @@ class ReceptionistCreate(BaseModel):
     password_hash: str = Field(..., min_length=6, description="Minimum 6 characters")
 
 
-# Schema for user login request
+# Schema for user login credentials
 class UserLogin(BaseModel):
     email: EmailStr
     password_hash: str
 
 
-# Schema for updating the authenticated user's own profile
+# Schema for updating user profile information
 class UserProfileUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
 
 
-# Schema for user API responses
+# Full response schema with role and status
 class UserResponse(BaseModel):
     id: UUID
     name: str
@@ -40,5 +46,3 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-# End file:

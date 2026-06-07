@@ -1,6 +1,10 @@
 # File path: backend/app/guests/guest_repository.py
 
-# Start file:
+"""
+Guest database operations module.
+
+This module provides database operations for guest management.
+"""
 
 from uuid import UUID
 
@@ -9,10 +13,6 @@ from sqlalchemy.orm import joinedload
 
 from .guest_model import Guest
 
-
-# =========================================================
-# CREATE
-# =========================================================
 
 def create_guest(
     db: Session,
@@ -26,10 +26,6 @@ def create_guest(
 
     return guest
 
-
-# =========================================================
-# READ BY ID
-# =========================================================
 
 def get_guest_by_id(
     db: Session,
@@ -45,10 +41,6 @@ def get_guest_by_id(
     )
 
 
-# =========================================================
-# READ BY DOCUMENT
-# =========================================================
-
 def get_guest_by_document(
     db: Session,
     document_number: str
@@ -61,10 +53,6 @@ def get_guest_by_document(
         .first()
     )
 
-
-# =========================================================
-# READ ALL
-# =========================================================
 
 def get_all_guests(
     db: Session
@@ -81,10 +69,6 @@ def get_all_guests(
         .all()
     )
 
-
-# =========================================================
-# READ COMPANY GUESTS
-# =========================================================
 
 def get_company_guests(
     db: Session,
@@ -105,10 +89,6 @@ def get_company_guests(
         .all()
     )
 
-
-# =========================================================
-# UPDATE
-# =========================================================
 
 def update_guest(
     db: Session,
@@ -136,10 +116,6 @@ def update_guest(
     return guest
 
 
-# =========================================================
-# DELETE
-# =========================================================
-
 def delete_guest(
     db: Session,
     guest_id: UUID
@@ -156,5 +132,3 @@ def delete_guest(
     db.commit()
 
     return guest
-
-# End file:

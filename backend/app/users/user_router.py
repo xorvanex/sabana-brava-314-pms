@@ -1,11 +1,17 @@
 # File path: backend/app/users/user_router.py
 
-# Start file:
+"""
+User API routes module.
 
-from fastapi import APIRouter, Depends, status, Form, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
+This module provides RESTful endpoints for user authentication,
+registration, and profile management.
+"""
+
 from uuid import UUID
+from typing import List
+
+from fastapi import APIRouter, Depends, Form, HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.database.sessions import get_db
 from app.auth.jwt_handler import verify_token
@@ -13,23 +19,21 @@ from app.auth.dependencies import require_admin_or_owner
 
 from . import user_scheme, user_service, user_repository
 
-
-# Router definition for user-related endpoints
+# User management endpoints
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
-# User authentication endpoint (returns JWT token)
+# User authentication endpoint
 @router.post("/login")
 def login(
     username: str = Form(..., description="User email"),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    # Authenticate user credentials and return access token
     return user_service.authenticate_user(db, username, password)
 
 
-# Register receptionist (admin/owner only)
+# Administrative: Create receptionist account
 @router.post(
     "/receptionist",
     response_model=user_scheme.UserResponse,
@@ -43,7 +47,6 @@ def register_receptionist(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
-    # Build validated Pydantic schema from form data
     user_in = user_scheme.ReceptionistCreate(
         name=name,
         email=email,
@@ -54,7 +57,7 @@ def register_receptionist(
     return user_service.create_receptionist(db, user_in)
 
 
-# Get all receptionists (admin/owner only)
+# Administrative: Get all receptionists
 @router.get("/receptionists", response_model=List[user_scheme.UserResponse])
 def get_receptionists(
     db: Session = Depends(get_db),
@@ -63,7 +66,7 @@ def get_receptionists(
     return user_service.get_all_receptionists(db)
 
 
-# Get current authenticated user profile
+# Current user: Get own profile
 @router.get("/me", response_model=user_scheme.UserResponse)
 def get_me(
     db: Session = Depends(get_db),
@@ -80,7 +83,7 @@ def get_me(
     return user_service.get_my_profile(db, str(user_id))
 
 
-# Update current authenticated user profile (name and phone)
+# Current user: Update own profile
 @router.put("/me", response_model=user_scheme.UserResponse)
 def update_me(
     name: str = Form(None),
@@ -100,7 +103,7 @@ def update_me(
     return user_service.update_my_profile(db, str(user_id), profile_in)
 
 
-# Update current user password
+# Current user: Change password
 @router.put("/me/password")
 def change_password(
     old_password: str = Form(...),
@@ -119,7 +122,7 @@ def change_password(
     return user_service.update_my_password(db, str(user_id), old_password, new_password)
 
 
-# Toggle user active/inactive status
+# Administrative: Toggle user status
 @router.patch("/{user_id}/status")
 def toggle_user_status(
     user_id: UUID,
@@ -129,7 +132,7 @@ def toggle_user_status(
     return user_service.toggle_user_status(db, user_id)
 
 
-# Retrieve a specific user by ID (admin/owner only)
+# Administrative: Get user by ID
 @router.get("/{user_id}", response_model=user_scheme.UserResponse)
 def get_user_by_id(
     user_id: UUID,
@@ -139,12 +142,10 @@ def get_user_by_id(
     return user_service.get_my_profile(db, str(user_id))
 
 
-# Retrieve all users (admin/owner only)
+# Administrative: Get all users
 @router.get("/", response_model=List[user_scheme.UserResponse])
 def get_all_users(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_or_owner)
 ):
     return user_repository.get_all_users(db)
-
-# End file:

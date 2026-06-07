@@ -1,6 +1,10 @@
 # File path: backend/app/companies/company_repository.py
 
-# Start file:
+"""
+Company database operations module.
+
+This module provides database operations for company management.
+"""
 
 from uuid import UUID
 
@@ -9,25 +13,27 @@ from sqlalchemy.orm import Session
 from .company_model import Company
 
 
-# Retrieve company by ID
+# Retrieve by primary key
 def get_company_by_id(db: Session, company_id: UUID) -> Company | None:
     return db.query(Company).filter(Company.id == company_id).first()
 
 
-# Retrieve company by NIT
+# Prevent duplicate registration using unique tax identifier
 def get_company_by_nit(db: Session, nit: str) -> Company | None:
     return db.query(Company).filter(Company.nit == nit).first()
 
 
-# Retrieve all companies
+# Retrieve all companies regardless of status
 def get_all_companies(db: Session):
     return db.query(Company).all()
 
-# Retrieve active companies
+
+# Return only active companies for reservation assignment
 def get_active_companies(db: Session):
     return db.query(Company).filter(Company.is_active == True).all()
 
-# Create a new company record
+
+# Create new company record
 def create_company(db: Session, company_data: dict) -> Company:
     new_company = Company(**company_data)
 
@@ -38,7 +44,6 @@ def create_company(db: Session, company_data: dict) -> Company:
     return new_company
 
 
-# Update existing company
 def update_company(
     db: Session,
     company_id: UUID,
@@ -55,5 +60,3 @@ def update_company(
         db.refresh(company)
 
     return company
-
-# End file:

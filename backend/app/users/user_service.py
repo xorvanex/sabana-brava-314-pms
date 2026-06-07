@@ -1,10 +1,16 @@
 # File path: backend/app/users/user_service.py
 
-# Start file:
+"""
+User business logic module.
+
+This module contains validation rules and business operations
+related to user management.
+"""
 
 from uuid import UUID
-from sqlalchemy.orm import Session
+
 from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.auth.hashing import hash_password, verify_password
 from app.auth.jwt_handler import create_access_token
@@ -12,8 +18,8 @@ from app.auth.jwt_handler import create_access_token
 from . import user_repository, user_scheme
 
 
-# Create receptionist user with hashed password
 def create_receptionist(db: Session, user_in: user_scheme.ReceptionistCreate):
+    """Create new receptionist account with email uniqueness check."""
     existing_user = user_repository.get_user_by_email(db, user_in.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -25,21 +31,21 @@ def create_receptionist(db: Session, user_in: user_scheme.ReceptionistCreate):
     return user_repository.create_user(db, user_data)
 
 
-# Retrieve all receptionist users
 def get_all_receptionists(db: Session):
+    """Retrieve all active receptionists for management."""
     return user_repository.get_users_by_role(db, user_scheme.UserRoleEnum.RECEPTIONIST.value)
 
 
-# Get authenticated user profile by ID
 def get_my_profile(db: Session, user_id: str):
-    user = user_repository.get_user_by_id(db, UUID(user_id))  
+    """Retrieve current user profile from JWT token."""
+    user = user_repository.get_user_by_id(db, UUID(user_id))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
-# Update authenticated user's own name and phone
 def update_my_profile(db: Session, user_id: str, profile_in: user_scheme.UserProfileUpdate):
+    """Update authenticated user profile information."""
     user = user_repository.get_user_by_id(db, UUID(user_id))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -52,37 +58,37 @@ def update_my_profile(db: Session, user_id: str, profile_in: user_scheme.UserPro
     return user_repository.update_user(db, UUID(user_id), update_data)
 
 
-# Update current user password after verification
 def update_my_password(db: Session, user_id: str, old_password: str, new_password: str):
-    user = user_repository.get_user_by_id(db, UUID(user_id))  
-    if not user or not verify_password(old_password, str(user.password_hash)):  
+    """Update user password with current password verification."""
+    user = user_repository.get_user_by_id(db, UUID(user_id))
+    if not user or not verify_password(old_password, str(user.password_hash)):
         raise HTTPException(status_code=400, detail="Incorrect current password")
 
     user_data = {"password_hash": hash_password(new_password)}
-    return user_repository.update_user(db, UUID(user_id), user_data)  
+    return user_repository.update_user(db, UUID(user_id), user_data)
 
 
-# Toggle user active status
 def toggle_user_status(db: Session, user_id: UUID):
+    """Toggle user active status for access control."""
     user = user_repository.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    new_status = not bool(user.is_active) 
+    new_status = not bool(user.is_active)
     return user_repository.update_user(db, user_id, {"is_active": new_status})
 
 
-# Authenticate user and generate JWT token
 def authenticate_user(db: Session, email: str, password: str):
+    """Authenticate user credentials and generate JWT token."""
     user = user_repository.get_user_by_email(db, email)
 
-    if not user or not verify_password(password, str(user.password_hash)):  
+    if not user or not verify_password(password, str(user.password_hash)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
         )
 
-    if not bool(user.is_active):  
+    if not bool(user.is_active):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User is deactivated"
@@ -102,5 +108,3 @@ def authenticate_user(db: Session, email: str, password: str):
             "role": user.role.value
         }
     }
-
-# End file:

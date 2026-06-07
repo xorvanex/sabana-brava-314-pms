@@ -1,6 +1,11 @@
 # File path: backend/app/companies/company_service.py
 
-# Start file:
+"""
+Company business logic module.
+
+This module contains validation rules and business operations
+related to company management.
+"""
 
 from uuid import UUID
 
@@ -10,13 +15,11 @@ from sqlalchemy.orm import Session
 from . import company_repository, company_scheme
 
 
-# Create a new company with unique NIT validation
 def create_company(
     db: Session,
     company_in: company_scheme.CompanyCreate
 ):
-
-    # Validate unique company NIT
+    """Create new company with duplicate NIT validation."""
     existing_company = company_repository.get_company_by_nit(
         db,
         company_in.nit
@@ -36,12 +39,11 @@ def create_company(
     )
 
 
-# Retrieve company by ID
 def get_company_by_id(
     db: Session,
     company_id: UUID
 ):
-
+    """Retrieve company by identifier with not found handling."""
     company = company_repository.get_company_by_id(
         db,
         company_id
@@ -55,8 +57,9 @@ def get_company_by_id(
 
     return company
 
-# Retrieve company by NIT
+
 def get_company_by_nit(db: Session, nit: str):
+    """Retrieve company by tax identifier for duplicate checks."""
     company = company_repository.get_company_by_nit(db, nit)
     if not company:
         raise HTTPException(
@@ -65,21 +68,23 @@ def get_company_by_nit(db: Session, nit: str):
         )
     return company
 
-# Retrieve all companies
+
 def get_all_companies(db: Session):
+    """Retrieve all companies for administrative listing."""
     return company_repository.get_all_companies(db)
 
-# Retrieve active companies
+
 def get_active_companies(db: Session):
+    """Retrieve only active companies for business operations."""
     return company_repository.get_active_companies(db)
 
-# Update company information
+
 def update_company(
     db: Session,
     company_id: UUID,
     company_in: company_scheme.CompanyUpdate
 ):
-
+    """Update company with partial update support."""
     company = company_repository.get_company_by_id(
         db,
         company_id
@@ -91,7 +96,6 @@ def update_company(
             detail="Company not found"
         )
 
-    # Remove unset values to avoid overwriting existing data
     update_data = company_in.model_dump(exclude_unset=True)
 
     return company_repository.update_company(
@@ -101,12 +105,11 @@ def update_company(
     )
 
 
-# Toggle company active status
 def toggle_company_status(
     db: Session,
     company_id: UUID
 ):
-
+    """Soft toggle company active/inactive status."""
     company = company_repository.get_company_by_id(
         db,
         company_id
@@ -118,8 +121,6 @@ def toggle_company_status(
             detail="Company not found"
         )
 
-    # Business rule:
-    # Toggle company availability for future operations
     new_status = not bool(company.is_active)
 
     return company_repository.update_company(
@@ -127,5 +128,3 @@ def toggle_company_status(
         company_id,
         {"is_active": new_status}
     )
-
-# End file:

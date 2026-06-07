@@ -1,8 +1,12 @@
 # File path: backend/app/guests/guest_router.py
 
-# Start file:
+"""
+Guest API routes module.
 
-from uuid import UUID
+This module provides RESTful endpoints for guest management.
+"""
+
+import uuid
 
 from fastapi import (
     APIRouter,
@@ -19,9 +23,10 @@ from app.auth.dependencies import (
     require_admin_owner_or_receptionist
 )
 
-from . import (
-    guest_service,
-    guest_scheme
+from .guest_scheme import (
+    GuestCreate,
+    GuestUpdate,
+    GuestResponse
 )
 
 from .guest_model import (
@@ -29,10 +34,15 @@ from .guest_model import (
     GuestGenderEnum
 )
 
+from .guest_service import (
+    create_guest_service,
+    get_all_guests_service,
+    get_company_guests_service,
+    get_guest_by_id_service,
+    update_guest_service,
+    delete_guest_service
+)
 
-# =========================================================
-# ROUTER CONFIGURATION
-# =========================================================
 
 router = APIRouter(
     prefix="/guests",
@@ -40,17 +50,13 @@ router = APIRouter(
 )
 
 
-# =========================================================
-# CREATE GUEST
-# =========================================================
-
 @router.post(
     "/",
-    response_model=guest_scheme.GuestResponse,
+    response_model=GuestResponse,
     status_code=status.HTTP_201_CREATED
 )
 def create_guest(
-    company_id: UUID = Form(...),
+    company_id: uuid.UUID = Form(...),
 
     first_name: str = Form(...),
     last_name: str = Form(...),
@@ -66,7 +72,7 @@ def create_guest(
     token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
-    guest_in = guest_scheme.GuestCreate(
+    guest_data = GuestCreate(
         company_id=company_id,
         first_name=first_name,
         last_name=last_name,
@@ -76,80 +82,64 @@ def create_guest(
         phone=phone
     )
 
-    return guest_service.create_guest(
+    return create_guest_service(
         db,
-        guest_in
+        guest_data
     )
 
 
-# =========================================================
-# GET ALL GUESTS
-# =========================================================
-
 @router.get(
     "/",
-    response_model=list[guest_scheme.GuestResponse]
+    response_model=list[GuestResponse]
 )
 def get_all_guests(
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
-    return guest_service.get_all_guests(db)
+    return get_all_guests_service(db)
 
-
-# =========================================================
-# GET COMPANY GUESTS
-# =========================================================
 
 @router.get(
     "/company/{company_id}",
-    response_model=list[guest_scheme.GuestResponse]
+    response_model=list[GuestResponse]
 )
 def get_company_guests(
-    company_id: UUID,
+    company_id: uuid.UUID,
 
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
-    return guest_service.get_company_guests(
+    return get_company_guests_service(
         db,
         company_id
     )
 
 
-# =========================================================
-# GET GUEST BY ID
-# =========================================================
-
 @router.get(
     "/{guest_id}",
-    response_model=guest_scheme.GuestResponse
+    response_model=GuestResponse
 )
 def get_guest_by_id(
-    guest_id: UUID,
+    guest_id: uuid.UUID,
 
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
-    return guest_service.get_guest_by_id(
+    return get_guest_by_id_service(
         db,
         guest_id
     )
 
 
-# =========================================================
-# UPDATE GUEST
-# =========================================================
-
 @router.put(
     "/{guest_id}",
-    response_model=guest_scheme.GuestResponse
+    response_model=GuestResponse
 )
 def update_guest(
-    guest_id: UUID,
+    guest_id: uuid.UUID,
 
     first_name: str | None = Form(None),
     last_name: str | None = Form(None),
@@ -165,7 +155,7 @@ def update_guest(
     token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
-    guest_in = guest_scheme.GuestUpdate(
+    guest_data = GuestUpdate(
         first_name=first_name,
         last_name=last_name,
         document_type=document_type,
@@ -174,31 +164,25 @@ def update_guest(
         phone=phone
     )
 
-    return guest_service.update_guest(
+    return update_guest_service(
         db,
         guest_id,
-        guest_in
+        guest_data
     )
 
-
-# =========================================================
-# DELETE GUEST
-# =========================================================
 
 @router.delete(
     "/{guest_id}",
     status_code=status.HTTP_200_OK
 )
 def delete_guest(
-    guest_id: UUID,
+    guest_id: uuid.UUID,
 
     db: Session = Depends(get_db),
     token_payload: dict = Depends(require_admin_owner_or_receptionist)
 ):
 
-    return guest_service.delete_guest(
+    return delete_guest_service(
         db,
         guest_id
     )
-
-# End file:

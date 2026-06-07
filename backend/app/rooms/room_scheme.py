@@ -1,6 +1,11 @@
 # File path: backend/app/rooms/room_scheme.py
 
-# Start file:
+"""
+Room schema definitions module.
+
+This module provides Pydantic schemas for room data validation
+and API responses.
+"""
 
 import uuid
 
@@ -9,21 +14,21 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.rooms.room_model import RoomStatusEnum
+from .room_model import RoomStatusEnum
 
 
-# Base room schema
+# Base schema with common room fields
 class RoomBase(BaseModel):
     room_number: str = Field(..., min_length=1, max_length=20)
     description: Optional[str] = Field(None, max_length=500)
 
 
-# Schema for room creation
+# Schema for creating new rooms
 class RoomCreate(RoomBase):
     status: RoomStatusEnum = RoomStatusEnum.AVAILABLE
 
 
-# Schema for room updates
+# Schema for updating existing rooms
 class RoomUpdate(BaseModel):
     room_number: Optional[str] = Field(None, min_length=1, max_length=20)
     description: Optional[str] = Field(None, max_length=500)
@@ -31,12 +36,12 @@ class RoomUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
-# Schema for room state updates
+# Schema for partial status updates
 class RoomStatusUpdate(BaseModel):
     status: RoomStatusEnum
 
 
-# Schema for API responses
+# Full response schema with audit timestamps
 class RoomResponse(RoomBase):
     id: uuid.UUID
     capacity: int
@@ -46,5 +51,3 @@ class RoomResponse(RoomBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-
-# End file:

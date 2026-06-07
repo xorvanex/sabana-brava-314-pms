@@ -1,6 +1,10 @@
 # File path: backend/app/companies/company_router.py
 
-# Start file:
+"""
+Company API routes module.
+
+This module provides RESTful endpoints for company management.
+"""
 
 from uuid import UUID
 from typing import List
@@ -13,19 +17,19 @@ from fastapi import (
 )
 
 from sqlalchemy.orm import Session
+
 from app.database.sessions import get_db
 from app.auth.dependencies import require_admin_or_owner, require_admin_owner_or_receptionist
+
 from . import company_scheme, company_service
 
-
-# Router definition for company-related endpoints
+# Company management endpoints
 router = APIRouter(
     prefix="/companies",
     tags=["Companies"]
 )
 
 
-# Create a new company
 @router.post(
     "/",
     response_model=company_scheme.CompanyResponse,
@@ -43,7 +47,6 @@ def create_company(
     token_payload: dict = Depends(require_admin_or_owner)
 ):
 
-    # Build validated Pydantic schema from form data
     company_in = company_scheme.CompanyCreate(
         name=name,
         nit=nit,
@@ -59,7 +62,6 @@ def create_company(
     )
 
 
-# Retrieve all companies
 @router.get(
     "/",
     response_model=List[company_scheme.CompanyResponse]
@@ -72,7 +74,6 @@ def get_all_companies(
     return company_service.get_all_companies(db)
 
 
-# Retrieve active companies
 @router.get(
     "/active",
     response_model=List[company_scheme.CompanyResponse]
@@ -84,7 +85,6 @@ def get_active_companies(
     return company_service.get_active_companies(db)
 
 
-# Retrieve company by ID
 @router.get(
     "/{company_id}",
     response_model=company_scheme.CompanyResponse
@@ -101,7 +101,7 @@ def get_company_by_id(
         company_id
     )
 
-# Retrieve company by NIT
+
 @router.get(
     "/search/nit/{nit}",
     response_model=company_scheme.CompanyResponse
@@ -114,7 +114,7 @@ def get_company_by_nit(
     company = company_service.get_company_by_nit(db, nit)
     return company
 
-# Update company information
+
 @router.put(
     "/{company_id}",
     response_model=company_scheme.CompanyResponse
@@ -131,7 +131,6 @@ def update_company(
     token_payload: dict = Depends(require_admin_or_owner)
 ):
 
-    # Build validated update schema from form data
     company_in = company_scheme.CompanyUpdate(
         company_representative=company_representative,
         address=address,
@@ -147,7 +146,6 @@ def update_company(
     )
 
 
-# Toggle company active/inactive status
 @router.patch(
     "/{company_id}/status",
     response_model=company_scheme.CompanyResponse
@@ -163,5 +161,3 @@ def toggle_company_status(
         db,
         company_id
     )
-
-# End file:

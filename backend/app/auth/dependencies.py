@@ -1,23 +1,21 @@
 # File path: backend/app/auth/dependencies.py
 
-# Start file:
+"""
+Authentication and authorization dependency injection module.
 
-# Authorization Layer:
-# - Handles role-based access control
-# - Validates user permissions
-# - Restricts protected endpoints
-# - Uses JWT payload dependencies
+This module provides FastAPI dependencies for role-based access control
+and JWT token verification.
+"""
 
 from fastapi import Depends, HTTPException, status
-from app.auth.jwt_handler import verify_token
+
+from .jwt_handler import verify_token
 
 
-# Authorization dependency: allows only ADMIN or OWNER roles
+# Restrict access to administrative users (OWNER or ADMINISTRATOR)
 def require_admin_or_owner(payload: dict = Depends(verify_token)) -> dict:
-    # Extract role from JWT payload
     rol = payload.get("role")
 
-    # Validate role permissions
     if rol not in ["OWNER", "ADMINISTRATOR"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -27,12 +25,10 @@ def require_admin_or_owner(payload: dict = Depends(verify_token)) -> dict:
     return payload
 
 
-# Authorization dependency: allows ADMIN, OWNER, or RECEPTIONIST roles
+# Extend access to reception staff for read-only operations
 def require_admin_owner_or_receptionist(payload: dict = Depends(verify_token)) -> dict:
-    # Extract role from JWT payload
     rol = payload.get("role")
 
-    # Validate role permissions
     if rol not in ["OWNER", "ADMINISTRATOR", "RECEPTIONIST"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -40,5 +36,3 @@ def require_admin_owner_or_receptionist(payload: dict = Depends(verify_token)) -
         )
 
     return payload
-
-# End file:

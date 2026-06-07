@@ -1,16 +1,13 @@
 # File path: backend/app/database/base.py
 
-# Start file:
+"""
+SQLAlchemy declarative base for ORM models.
 
-# Database Base Layer:
-# - Defines SQLAlchemy declarative base
-# - Serves as ORM model foundation
-# - Centralizes database metadata
+This module provides the declarative base class that serves as the foundation
+for all database models in the application.
+"""
 
 from sqlalchemy.orm import declarative_base
 
-
-# SQLAlchemy declarative base for ORM models
+# Declarative base for all SQLAlchemy ORM models
 Base = declarative_base()
-
-# End file:

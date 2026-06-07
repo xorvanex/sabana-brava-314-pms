@@ -1,10 +1,14 @@
 # File path: backend/app/guests/guest_model.py
 
-# Start file:
+"""
+Guest ORM model module.
+
+This module defines the Guest model and related associations
+for guest management.
+"""
 
 import uuid
 import enum
-
 from datetime import datetime
 
 from sqlalchemy import (
@@ -22,18 +26,10 @@ from sqlalchemy.types import Uuid
 from app.database.base import Base
 
 
-# =========================================================
-# ENUM: GuestGenderEnum
-# =========================================================
-
 class GuestGenderEnum(str, enum.Enum):
     MALE = "MALE"
     FEMALE = "FEMALE"
 
-
-# =========================================================
-# ENUM: DocumentTypeEnum
-# =========================================================
 
 class DocumentTypeEnum(str, enum.Enum):
     ID_CARD = "ID_CARD"
@@ -41,14 +37,9 @@ class DocumentTypeEnum(str, enum.Enum):
     PASSPORT = "PASSPORT"
 
 
-# =========================================================
-# MODEL: Guest
-# =========================================================
-
 class Guest(Base):
     __tablename__ = "guests"
 
-    # Primary key UUID
     id = Column(
         Uuid(as_uuid=True),
         primary_key=True,
@@ -56,14 +47,12 @@ class Guest(Base):
         index=True
     )
 
-    # Company owner of the guest
     company_id = Column(
         Uuid(as_uuid=True),
         ForeignKey("companies.id"),
         nullable=False
     )
 
-    # Personal information
     first_name = Column(
         String(100),
         nullable=False
@@ -74,7 +63,6 @@ class Guest(Base):
         nullable=False
     )
 
-    # Identification information
     document_type = Column(
         Enum(
             DocumentTypeEnum,
@@ -90,7 +78,6 @@ class Guest(Base):
         unique=True
     )
 
-    # Gender
     gender = Column(
         Enum(
             GuestGenderEnum,
@@ -100,13 +87,11 @@ class Guest(Base):
         nullable=False
     )
 
-    # Contact information
     phone = Column(
         String(20),
         nullable=True
     )
 
-    # Audit timestamps
     created_at = Column(
         DateTime(timezone=True),
         default=datetime.utcnow,
@@ -120,25 +105,18 @@ class Guest(Base):
         nullable=True
     )
 
-    # =====================================================
-    # RELATIONSHIPS
-    # =====================================================
-
-    # Guest belongs to one company
     company = relationship(
         "Company",
         back_populates="guests",
         foreign_keys=[company_id]
     )
 
-    # Guest assignments to reservations
     reservation_guests = relationship(
         "ReservationGuest",
         back_populates="guest",
         cascade="all, delete-orphan"
     )
 
-    # Convenience relationship
     reservations = relationship(
         "Reservation",
         secondary="reservation_guests",
@@ -153,10 +131,6 @@ class Guest(Base):
     )
 
 
-# =========================================================
-# MODEL: ReservationGuest
-# =========================================================
-
 class ReservationGuest(Base):
     __tablename__ = "reservation_guests"
 
@@ -164,7 +138,6 @@ class ReservationGuest(Base):
         UniqueConstraint('reservation_id', 'guest_id', name='uq_reservation_guest'),
     )
 
-    # Primary key UUID
     id = Column(
         Uuid(as_uuid=True),
         primary_key=True,
@@ -172,30 +145,23 @@ class ReservationGuest(Base):
         index=True
     )
 
-    # Reservation relationship
     reservation_id = Column(
         Uuid(as_uuid=True),
         ForeignKey("reservations.id"),
         nullable=False
     )
 
-    # Guest relationship
     guest_id = Column(
         Uuid(as_uuid=True),
         ForeignKey("guests.id"),
         nullable=False
     )
 
-    # Audit timestamp
     created_at = Column(
         DateTime(timezone=True),
         default=datetime.utcnow,
         nullable=True
     )
-
-    # =====================================================
-    # RELATIONSHIPS
-    # =====================================================
 
     reservation = relationship(
         "Reservation",
@@ -208,5 +174,3 @@ class ReservationGuest(Base):
         back_populates="reservation_guests",
         foreign_keys=[guest_id]
     )
-
-# End file:

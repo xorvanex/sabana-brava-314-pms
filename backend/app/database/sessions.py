@@ -1,18 +1,17 @@
 # File path: backend/app/database/sessions.py
 
-# Start file:
+"""
+Database session management module.
 
-# Database Session Layer:
-# - Creates database sessions
-# - Manages session lifecycle
-# - Provides dependency injection
-# - Ensures session cleanup
+This module provides the session factory and dependency injection
+for database operations.
+"""
 
 from sqlalchemy.orm import sessionmaker
+
 from .connection import engine
 
-
-# Local database session factory
+# Session factory for database operations
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
@@ -20,12 +19,10 @@ SessionLocal = sessionmaker(
 )
 
 
-# Dependency generator for database session lifecycle
 def get_db():
+    """Dependency that provides database session for request handlers."""
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
-
-# End file:

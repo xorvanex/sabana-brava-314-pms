@@ -1,29 +1,26 @@
 # File path: backend/app/database/connection.py
 
-# Start file:
+"""
+Database engine configuration module.
 
-# Database Connection Layer:
-# - Configures database engine
-# - Loads environment variables
-# - Establishes PostgreSQL connection
-# - Handles connection settings
+This module configures the SQLAlchemy database engine and handles
+the PostgreSQL connection settings.
+"""
 
-from sqlalchemy import create_engine
-from sqlalchemy.pool import NullPool
-from dotenv import load_dotenv, find_dotenv
 import os
 
-# Load environment variables from SB314.env
+from dotenv import load_dotenv, find_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.pool import NullPool
+
 load_dotenv(find_dotenv("SB314.env"))
 
-# Read the full database connection string directly from .env
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Validate database configuration
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL not found in SB314.env")
 
-# SQLAlchemy engine initialization con NullPool
+# Create engine with SSL required for PostgreSQL connections
 engine = create_engine(
     DATABASE_URL,
     poolclass=NullPool,
@@ -31,5 +28,3 @@ engine = create_engine(
         "sslmode": "require"
     }
 )
-
-# End file:

@@ -1,9 +1,12 @@
 # File path: backend/app/companies/company_model.py
 
-# Start file:
+"""
+Company ORM model module.
+
+This module defines the Company model for corporate client management.
+"""
 
 import uuid
-
 from datetime import datetime
 
 from sqlalchemy import Column, String, Boolean, DateTime
@@ -13,11 +16,10 @@ from sqlalchemy.types import Uuid
 from app.database.base import Base
 
 
-# Company ORM model definition
 class Company(Base):
     __tablename__ = "companies"
 
-    # Primary key UUID
+    # Primary key: UUID for distributed system compatibility
     id = Column(
         Uuid(as_uuid=True),
         primary_key=True,
@@ -25,21 +27,20 @@ class Company(Base):
         index=True
     )
 
-    # Company legal name
+    # Business fields
     name = Column(String(150), nullable=False)
 
-    # Unique company tax identifier
+    # Unique tax identifier for duplicate prevention
     nit = Column(String(30), unique=True, nullable=False, index=True)
 
-    # Name of company representative
     company_representative = Column(String(150), nullable=False)
-    
-    # Company contact information
+
+    # Contact information
     address = Column(String(250), nullable=True)
     phone = Column(String(20), nullable=True)
     email = Column(String(150), nullable=True)
 
-    # Company active/inactive status
+    # Status field for soft delete
     is_active = Column(Boolean, default=True)
 
     # Audit timestamps
@@ -52,32 +53,25 @@ class Company(Base):
         nullable=True
     )
 
-    # One-to-many relationship:
-    # A company can have multiple contracts associated
+    # Relationships
     contracts = relationship(
         "Contract",
         back_populates="company",
     )
 
-    # One-to-many relationship:
-    # A company can have multiple reservations associated
     reservations = relationship(
         "Reservation",
         back_populates="company",
     )
-    
-# A company can have multiple employeds(GUESTS) associate
+
+    # Cascade delete when company is removed
     guests = relationship(
         "Guest",
         back_populates="company",
         cascade="all, delete-orphan"
     )
 
-    # One-to-many relationship:
-    # A company can have multiple invoices associated
     invoices = relationship(
         "Invoice",
         back_populates="company",
     )
-
-# End file:
