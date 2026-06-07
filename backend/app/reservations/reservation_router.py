@@ -1,33 +1,39 @@
-# File path: backend/app/reservations/reservation_router.py
+"""
+Router for reservation-related endpoints.
 
-# Start file:
+Provides API endpoints for CRUD operations, status management,
+guest assignments, and room assignments.
+"""
 
-from uuid import UUID
+# Third-party imports
 from datetime import date
 from typing import List, Optional
+from uuid import UUID
 
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
     status,
-    Form
+    Form,
 )
-
 from sqlalchemy.orm import Session
 
-from app.database.sessions import get_db
-
+# Local imports
 from app.auth.dependencies import require_admin_owner_or_receptionist
+from app.database.sessions import get_db
+from app.reservations.reservation_model import ReservationStatusEnum
 
 from . import reservation_scheme, reservation_service
 
-from app.reservations.reservation_model import ReservationStatusEnum
 
-# Router definition for reservation-related endpoints
+# =============================================================================
+# ROUTER CONFIGURATION
+# =============================================================================
+
 router = APIRouter(
     prefix="/reservations",
-    tags=["Reservations"]
+    tags=["Reservations"],
 )
 
 
@@ -459,6 +465,3 @@ def delete_room_assignment(
         reservation_id,
         guest_id
     )
-
-
-# End file:

@@ -1,10 +1,14 @@
 # File path: backend/app/reservations/reservation_model.py
 
-# Start file:
+"""
+Reservation ORM model module.
+
+This module defines the Reservation model and associated enumerations
+for hotel reservation management.
+"""
 
 import uuid
 import enum
-
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -24,8 +28,12 @@ from sqlalchemy.types import Uuid
 from app.database.base import Base
 
 
-# Reservation status enumeration
+# =============================================================================
+# Enumerations
+# =============================================================================
+
 class ReservationStatusEnum(str, enum.Enum):
+    """Reservation lifecycle statuses."""
     PENDING = "PENDING"
     CONFIRMED = "CONFIRMED"
     CHECKED_IN = "CHECKED_IN"
@@ -33,23 +41,46 @@ class ReservationStatusEnum(str, enum.Enum):
     COMPLETED = "COMPLETED"
     NO_SHOW = "NO_SHOW"
 
-BLOCKING_STATUSES = {ReservationStatusEnum.PENDING, ReservationStatusEnum.CONFIRMED}
+
+# Statuses that block room availability (consume room inventory)
+BLOCKING_STATUSES = {
+    ReservationStatusEnum.PENDING,
+    ReservationStatusEnum.CONFIRMED
+}
+
 
 # Allowed status transitions for reservation state machine
 VALID_TRANSITIONS: dict[ReservationStatusEnum, set[ReservationStatusEnum]] = {
-    ReservationStatusEnum.PENDING:    {ReservationStatusEnum.CONFIRMED, ReservationStatusEnum.CANCELLED, ReservationStatusEnum.NO_SHOW},
-    ReservationStatusEnum.CONFIRMED:  {ReservationStatusEnum.CHECKED_IN, ReservationStatusEnum.CANCELLED, ReservationStatusEnum.NO_SHOW},
-    ReservationStatusEnum.CHECKED_IN: {ReservationStatusEnum.COMPLETED},
-    ReservationStatusEnum.COMPLETED:  set(),
-    ReservationStatusEnum.CANCELLED:  set(),
-    ReservationStatusEnum.NO_SHOW:    set(),
+    ReservationStatusEnum.PENDING: {
+        ReservationStatusEnum.CONFIRMED,
+        ReservationStatusEnum.CANCELLED,
+        ReservationStatusEnum.NO_SHOW
+    },
+    ReservationStatusEnum.CONFIRMED: {
+        ReservationStatusEnum.CHECKED_IN,
+        ReservationStatusEnum.CANCELLED,
+        ReservationStatusEnum.NO_SHOW
+    },
+    ReservationStatusEnum.CHECKED_IN: {
+        ReservationStatusEnum.COMPLETED
+    },
+    ReservationStatusEnum.COMPLETED: set(),
+    ReservationStatusEnum.CANCELLED: set(),
+    ReservationStatusEnum.NO_SHOW: set(),
 }
 
-# Reservation ORM model definition
+
+# =============================================================================
+# ORM Models
+# =============================================================================
+
 class Reservation(Base):
+    """Reservation entity representing a hotel booking."""
     __tablename__ = "reservations"
 
-    # Primary key UUID
+    # -------------------------------------------------------------------------
+    # Primary Key
+    # -------------------------------------------------------------------------
     id = Column(
         Uuid(as_uuid=True),
         primary_key=True,
@@ -57,7 +88,17 @@ class Reservation(Base):
         index=True
     )
 
-    # Foreign key relationship:
+    # -------------------------------------------------------------------------
+    # Reservation Information
+    # -------------------------------------------------------------------------
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    guest_count = Column(Integer, nullable=False)
+    notes = Column(Text, nullable=True)
+
+    # -------------------------------------------------------------------------
+    # Guest Information (foreign keys for relationships)
+    # -------------------------------------------------------------------------
     # Every reservation must belong to one company
     company_id = Column(
         Uuid(as_uuid=True),
@@ -65,7 +106,6 @@ class Reservation(Base):
         nullable=False
     )
 
-    # Foreign key relationship:
     # Every reservation must belong to one contract
     contract_id = Column(
         Uuid(as_uuid=True),
@@ -73,14 +113,25 @@ class Reservation(Base):
         nullable=False
     )
 
-    # Reservation dates
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=False)
+    # User who created the reservation
+    created_by = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id"),
+        nullable=False
+    )
 
-    # Number of guests
-    guest_count = Column(Integer, nullable=False)
+    # -------------------------------------------------------------------------
+    # Room Information (invoice tracking)
+    # -------------------------------------------------------------------------
+    invoice_id = Column(
+        Uuid(as_uuid=True),
+        ForeignKey("invoices.id"),
+        nullable=True
+    )
 
-    # Reservation status
+    # -------------------------------------------------------------------------
+    # Status Fields
+    # -------------------------------------------------------------------------
     status = Column(
         Enum(
             ReservationStatusEnum,
@@ -91,30 +142,9 @@ class Reservation(Base):
         default=ReservationStatusEnum.PENDING
     )
 
-    # Reservation notes
-    notes = Column(Text, nullable=True)
-
-    # User who created the reservation
-    created_by = Column(
-        Uuid(as_uuid=True),
-        ForeignKey("users.id"),
-        nullable=False
-    )
-
-# Invoice foreign key for invoice tracking
-    invoice_id = Column(
-        Uuid(as_uuid=True),
-        ForeignKey("invoices.id"),
-        nullable=True
-    )
-
-    # ORM relationship with Invoice model
-    invoice = relationship(
-        "Invoice",
-        back_populates="invoices",
-    )
-
-    # Audit timestamps
+    # -------------------------------------------------------------------------
+    # Audit Fields
+    # -------------------------------------------------------------------------
     created_at = Column(
         DateTime(timezone=True),
         default=datetime.utcnow,
@@ -128,24 +158,29 @@ class Reservation(Base):
         nullable=True
     )
 
-    # ORM relationship with Company model
+    # -------------------------------------------------------------------------
+    # Relationships
+    # -------------------------------------------------------------------------
     company = relationship(
         "Company",
         back_populates="reservations",
         foreign_keys=[company_id]
     )
 
-    # ORM relationship with Contract model
     contract = relationship(
         "Contract",
         back_populates="reservations",
         foreign_keys=[contract_id]
     )
 
-    # ORM relationship with User model
     user = relationship(
         "User",
         foreign_keys=[created_by]
+    )
+
+    invoice = relationship(
+        "Invoice",
+        back_populates="invoices"
     )
 
     # Rooms assigned to this reservation through the association table
@@ -175,7 +210,7 @@ class Reservation(Base):
         viewonly=True
     )
 
-    # Room assignments for this reservation
+    # Room assignments for guest-room mapping
     room_assignments = relationship(
         "RoomAssignment",
         back_populates="reservation",
@@ -183,10 +218,10 @@ class Reservation(Base):
     )
 
 
-# Reference to the reservation_rooms table that exists in the
-# relationship between reservations and rooms
 class ReservationRoom(Base):
+    """Association table for reservation-room many-to-many relationship."""
     __tablename__ = "reservation_rooms"
+
     __table_args__ = (
         UniqueConstraint("reservation_id", "room_id", name="uq_reservation_room"),
     )
@@ -229,8 +264,8 @@ class ReservationRoom(Base):
     )
 
 
-# RoomAssignment: tracks which guest occupies which room in a reservation
 class RoomAssignment(Base):
+    """Tracks which guest occupies which room in a reservation."""
     __tablename__ = "room_assignments"
 
     id = Column(
@@ -299,5 +334,3 @@ class RoomAssignment(Base):
         "User",
         foreign_keys=[assigned_by]
     )
-
-# End file:

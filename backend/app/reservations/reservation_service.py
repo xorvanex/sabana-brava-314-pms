@@ -1,7 +1,11 @@
-# File path: backend/app/reservations/reservation_service.py
+"""
+Service layer for reservation operations.
 
-# Start file:
+Provides business logic for creating, updating, and managing reservations,
+including validation, status transitions, and room synchronization.
+"""
 
+# Third-party imports
 from datetime import date
 from typing import cast
 from uuid import UUID
@@ -9,30 +13,34 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from . import (
-    reservation_repository,
-    reservation_scheme
-)
-
+# Local imports
 from app.companies import company_repository
-
-from app.reservations.reservation_model import ReservationStatusEnum, BLOCKING_STATUSES, VALID_TRANSITIONS
-from app.rooms.room_model import RoomStatusEnum
-from app.rooms import room_repository
-
 from app.guests import guest_repository
+from app.reservations.reservation_model import (
+    BLOCKING_STATUSES,
+    VALID_TRANSITIONS,
+    ReservationStatusEnum,
+)
+from app.rooms import room_repository
+from app.rooms.room_model import RoomStatusEnum
 
+from . import reservation_repository, reservation_scheme
+
+
+# =============================================================================
+# CONSTANTS STATUSES
+# =============================================================================
 
 OCCUPYING_STATUSES = {
     ReservationStatusEnum.PENDING,
     ReservationStatusEnum.CONFIRMED,
-    ReservationStatusEnum.CHECKED_IN
+    ReservationStatusEnum.CHECKED_IN,
 }
 
 RELEASING_STATUSES = {
     ReservationStatusEnum.COMPLETED,
     ReservationStatusEnum.CANCELLED,
-    ReservationStatusEnum.NO_SHOW
+    ReservationStatusEnum.NO_SHOW,
 }
 
 
@@ -687,7 +695,7 @@ def create_room_assignment(
         raise HTTPException(
             status_code=404,
             detail="Reservation not found"
-        )
+)
 
     # Validation 4: Check reservation status (not CANCELLED, COMPLETED, NO_SHOW)
     current_status = cast(ReservationStatusEnum, reservation.status)
@@ -710,7 +718,7 @@ def create_room_assignment(
             detail="Guest is not assigned to reservation"
         )
 
-# Validation 3: Room must be assigned to the reservation
+    # Validation 3: Room must be assigned to the reservation
     reservation_room_ids = [
         cast(UUID, rr.room_id)
         for rr in reservation.reservation_rooms
@@ -811,6 +819,3 @@ def delete_room_assignment(
     return {
         "message": "Room assignment deleted successfully"
     }
-
-
-# End file:

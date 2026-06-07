@@ -1,6 +1,12 @@
 # File path: backend/app/reservations/reservation_repository.py
 
-# Start file: 
+"""
+Reservation database operations module.
+
+This module provides database operations for reservation management,
+including queries for availability checking, date overlap detection,
+and room assignment tracking.
+"""
 
 from datetime import date
 from typing import cast
@@ -8,109 +14,28 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session, joinedload
 
-from .reservation_model import Reservation, ReservationRoom, RoomAssignment, ReservationStatusEnum
-
-
-# Statuses eligible for billing/invoicing
-BILLABLE_STATUSES = {
-    ReservationStatusEnum.CONFIRMED,
-    ReservationStatusEnum.CHECKED_IN,
-    ReservationStatusEnum.COMPLETED
-}
-
-
 from app.contracts.contract_model import Contract, ContractRoom
-from app.rooms.room_model import Room
-
-from app.reservations.reservation_model import BLOCKING_STATUSES
-
 from app.guests.guest_model import Guest, ReservationGuest
+from app.rooms.room_model import Room
+from app.reservations.reservation_model import (
+    Reservation,
+    ReservationRoom,
+    RoomAssignment,
+    ReservationStatusEnum,
+    BLOCKING_STATUSES
+)
 
 
-# Retrieve reservation by ID
-def get_reservation_by_id(
-    db: Session,
-    reservation_id: UUID
-) -> Reservation | None:
+# =============================================================================
+# Create Operations
+# =============================================================================
 
-    return (
-        db.query(Reservation)
-        .options(
-            joinedload(Reservation.company),
-            joinedload(Reservation.contract),
-            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
-            joinedload(Reservation.rooms),
-            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
-            joinedload(Reservation.guests)
-        )
-        .filter(Reservation.id == reservation_id)
-        .first()
-    )
-
-
-# Retrieve all reservations
-def get_all_reservations(db: Session):
-
-    return (
-        db.query(Reservation)
-        .options(
-            joinedload(Reservation.company),
-            joinedload(Reservation.contract),
-            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
-            joinedload(Reservation.rooms),
-            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
-            joinedload(Reservation.guests)
-        )
-        .all()
-    )
-
-
-# Retrieve active reservations
-def get_active_reservations(db: Session):
-
-    return (
-        db.query(Reservation)
-        .filter(Reservation.status.in_(BLOCKING_STATUSES))
-        .options(
-            joinedload(Reservation.company),
-            joinedload(Reservation.contract),
-            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
-            joinedload(Reservation.rooms),
-            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
-            joinedload(Reservation.guests)
-        )
-        .all()
-    )
-
-
-# Retrieve reservations by company
-def get_company_reservations(
-    db: Session,
-    company_id: UUID
-):
-
-    return (
-        db.query(Reservation)
-        .filter(Reservation.company_id == company_id)
-        .options(
-            joinedload(Reservation.company),
-            joinedload(Reservation.contract),
-            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
-            joinedload(Reservation.rooms),
-            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
-            joinedload(Reservation.guests)
-        )
-        .all()
-    )
-
-
-# Create new reservation record
 def create_reservation(
     db: Session,
     reservation_data: dict,
     room_ids: list[UUID] | None = None
 ) -> Reservation:
-
+    """Create a new reservation record."""
     new_reservation = Reservation(**reservation_data)
 
     db.add(new_reservation)
@@ -138,14 +63,177 @@ def create_reservation(
     return reservation
 
 
-# Update existing reservation
+def assign_guests_to_reservation(
+    db: Session,
+    reservation_id: UUID,
+    guest_ids: list[UUID]
+) -> list[ReservationGuest]:
+    """Assign guests to a reservation."""
+    assignments = []
+
+    for guest_id in guest_ids:
+        assignment = ReservationGuest(
+            reservation_id=reservation_id,
+            guest_id=guest_id
+        )
+
+        db.add(assignment)
+        assignments.append(assignment)
+
+    db.commit()
+
+    for assignment in assignments:
+        db.refresh(assignment)
+
+    return assignments
+
+
+# =============================================================================
+# Read Operations
+# =============================================================================
+
+def get_reservation_by_id(
+    db: Session,
+    reservation_id: UUID
+) -> Reservation | None:
+    """Retrieve reservation by ID with all relationships."""
+    return (
+        db.query(Reservation)
+        .options(
+            joinedload(Reservation.company),
+            joinedload(Reservation.contract),
+            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
+        )
+        .filter(Reservation.id == reservation_id)
+        .first()
+    )
+
+
+def get_all_reservations(db: Session):
+    """Retrieve all reservations."""
+    return (
+        db.query(Reservation)
+        .options(
+            joinedload(Reservation.company),
+            joinedload(Reservation.contract),
+            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
+        )
+        .all()
+    )
+
+
+def get_active_reservations(db: Session):
+    """Retrieve active reservations (PENDING or CONFIRMED status)."""
+    return (
+        db.query(Reservation)
+        .filter(Reservation.status.in_(BLOCKING_STATUSES))
+        .options(
+            joinedload(Reservation.company),
+            joinedload(Reservation.contract),
+            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
+        )
+        .all()
+    )
+
+
+def get_company_reservations(
+    db: Session,
+    company_id: UUID
+):
+    """Retrieve reservations by company."""
+    return (
+        db.query(Reservation)
+        .filter(Reservation.company_id == company_id)
+        .options(
+            joinedload(Reservation.company),
+            joinedload(Reservation.contract),
+            joinedload(Reservation.reservation_rooms).joinedload(ReservationRoom.room),
+            joinedload(Reservation.rooms),
+            joinedload(Reservation.reservation_guests).joinedload(ReservationGuest.guest),
+            joinedload(Reservation.guests)
+        )
+        .all()
+    )
+
+
+def get_contract_by_id(
+    db: Session,
+    contract_id: UUID
+) -> Contract | None:
+    """Retrieve contract by ID."""
+    return (
+        db.query(Contract)
+        .options(
+            joinedload(Contract.contract_rooms),
+            joinedload(Contract.rooms)
+        )
+        .filter(Contract.id == contract_id)
+        .first()
+    )
+
+
+def get_reservation_guests(
+    db: Session,
+    reservation_id: UUID
+):
+    """Retrieve all guests assigned to a reservation."""
+    return (
+        db.query(Guest)
+        .join(
+            ReservationGuest,
+            ReservationGuest.guest_id == Guest.id
+        )
+        .filter(
+            ReservationGuest.reservation_id == reservation_id
+        )
+        .all()
+    )
+
+
+def get_guest_by_id(
+    db: Session,
+    guest_id: UUID
+):
+    """Retrieve guest by ID."""
+    return (
+        db.query(Guest)
+        .filter(Guest.id == guest_id)
+        .first()
+    )
+
+
+def get_room_by_id(
+    db: Session,
+    room_id: UUID
+) -> Room | None:
+    """Retrieve room by ID."""
+    return (
+        db.query(Room)
+        .filter(Room.id == room_id)
+        .first()
+    )
+
+
+# =============================================================================
+# Update Operations
+# =============================================================================
+
 def update_reservation(
     db: Session,
     reservation_id: UUID,
     reservation_data: dict,
     room_ids: list[UUID] | None = None
 ) -> Reservation | None:
-
+    """Update an existing reservation."""
     reservation = get_reservation_by_id(
         db,
         reservation_id
@@ -175,10 +263,41 @@ def update_reservation(
     return reservation
 
 
+# =============================================================================
+# Delete Operations
+# =============================================================================
+
+def remove_guest_from_reservation(
+    db: Session,
+    reservation_id: UUID,
+    guest_id: UUID
+):
+    """Remove a guest from a reservation."""
+    assignment = (
+        db.query(ReservationGuest)
+        .filter(
+            ReservationGuest.reservation_id == reservation_id,
+            ReservationGuest.guest_id == guest_id
+        )
+        .first()
+    )
+
+    if assignment:
+        db.delete(assignment)
+        db.commit()
+
+    return assignment
+
+
+# =============================================================================
+# Utility Queries
+# =============================================================================
+
 def get_rooms_by_ids(
     db: Session,
     room_ids: list[UUID]
 ) -> list[Room]:
+    """Retrieve multiple rooms by their IDs."""
     if not room_ids:
         return []
 
@@ -193,7 +312,7 @@ def get_contract_room_ids(
     db: Session,
     contract_id: UUID
 ) -> set[UUID]:
-
+    """Get all room IDs associated with a contract."""
     contract_rooms = (
         db.query(ContractRoom)
         .filter(ContractRoom.contract_id == contract_id)
@@ -206,6 +325,52 @@ def get_contract_room_ids(
     }
 
 
+def get_reservation_room_ids(
+    db: Session,
+    reservation_id: UUID
+) -> list[UUID]:
+    """Get all room IDs associated with a reservation."""
+    reservation_rooms = (
+        db.query(ReservationRoom)
+        .filter(ReservationRoom.reservation_id == reservation_id)
+        .all()
+    )
+
+    return [cast(UUID, rr.room_id) for rr in reservation_rooms]
+
+
+def reservation_guest_exists(
+    db: Session,
+    reservation_id: UUID,
+    guest_id: UUID
+):
+    """Check if a guest is already assigned to a reservation."""
+    return (
+        db.query(ReservationGuest)
+        .filter(
+            ReservationGuest.reservation_id == reservation_id,
+            ReservationGuest.guest_id == guest_id
+        )
+        .first()
+    )
+
+
+def count_reservation_guests(
+    db: Session,
+    reservation_id: UUID
+) -> int:
+    """Count guests assigned to a reservation."""
+    return (
+        db.query(ReservationGuest)
+        .filter(ReservationGuest.reservation_id == reservation_id)
+        .count()
+    )
+
+
+# =============================================================================
+# Availability and Date Overlap Queries (PROTECTED BUSINESS LOGIC)
+# =============================================================================
+
 def check_overlapping_reservations(
     db: Session,
     room_ids: list[UUID],
@@ -213,10 +378,14 @@ def check_overlapping_reservations(
     end_date: date,
     exclude_reservation_id: UUID | None = None
 ) -> bool:
+    """
+    Check if any rooms have overlapping reservations during the requested period.
+    
+    Only statuses that consume room availability (BLOCKING_STATUSES) are considered overlaps.
+    """
     if not room_ids:
         return False
 
-    # Only statuses that consume room availability are considered overlaps.
     query = (
         db.query(Reservation)
         .filter(
@@ -234,43 +403,12 @@ def check_overlapping_reservations(
     return query.first() is not None
 
 
-def get_contract_by_id(
-    db: Session,
-    contract_id: UUID
-) -> Contract | None:
-
-    return (
-        db.query(Contract)
-        .options(
-            joinedload(Contract.contract_rooms),
-            joinedload(Contract.rooms)
-        )
-        .filter(Contract.id == contract_id)
-        .first()
-    )
-
-
-# Get all room IDs associated with a reservation
-def get_reservation_room_ids(
-    db: Session,
-    reservation_id: UUID
-) -> list[UUID]:
-
-    reservation_rooms = (
-        db.query(ReservationRoom)
-        .filter(ReservationRoom.reservation_id == reservation_id)
-        .all()
-    )
-
-    return [cast(UUID, rr.room_id) for rr in reservation_rooms]
-
-
-# Check if rooms are occupied by other active reservations
 def are_rooms_occupied_by_others(
     db: Session,
     room_ids: list[UUID],
     exclude_reservation_id: UUID | None = None
 ) -> bool:
+    """Check if rooms are occupied by other active reservations."""
     if not room_ids:
         return False
 
@@ -288,105 +426,10 @@ def are_rooms_occupied_by_others(
 
     return query.first() is not None
 
-def get_reservation_guests(
-    db: Session,
-    reservation_id: UUID
-):
-    return (
-        db.query(Guest)
-        .join(
-            ReservationGuest,
-            ReservationGuest.guest_id == Guest.id
-        )
-        .filter(
-            ReservationGuest.reservation_id == reservation_id
-        )
-        .all()
-    )
 
-def get_guest_by_id(
-    db: Session,
-    guest_id: UUID
-):
-    return (
-        db.query(Guest)
-        .filter(Guest.id == guest_id)
-        .first()
-    )
-
-def assign_guests_to_reservation(
-    db: Session,
-    reservation_id: UUID,
-    guest_ids: list[UUID]
-) -> list[ReservationGuest]:
-    assignments = []
-
-    for guest_id in guest_ids:
-        assignment = ReservationGuest(
-            reservation_id=reservation_id,
-            guest_id=guest_id
-        )
-
-        db.add(assignment)
-        assignments.append(assignment)
-
-    db.commit()
-
-    # Refresh to load relationships
-    for assignment in assignments:
-        db.refresh(assignment)
-
-    return assignments
-
-def reservation_guest_exists(
-    db: Session,
-    reservation_id: UUID,
-    guest_id: UUID
-):
-    return (
-        db.query(ReservationGuest)
-        .filter(
-            ReservationGuest.reservation_id == reservation_id,
-            ReservationGuest.guest_id == guest_id
-        )
-        .first()
-    )
-
-def remove_guest_from_reservation(
-    db: Session,
-    reservation_id: UUID,
-    guest_id: UUID
-):
-    assignment = (
-        db.query(ReservationGuest)
-        .filter(
-            ReservationGuest.reservation_id == reservation_id,
-            ReservationGuest.guest_id == guest_id
-        )
-        .first()
-    )
-
-    if assignment:
-        db.delete(assignment)
-        db.commit()
-
-    return assignment
-
-
-def count_reservation_guests(
-    db: Session,
-    reservation_id: UUID
-) -> int:
-    return (
-        db.query(ReservationGuest)
-        .filter(ReservationGuest.reservation_id == reservation_id)
-        .count()
-    )
-
-
-# =========================================================
-# ROOM ASSIGNMENT REPOSITORY FUNCTIONS
-# =========================================================
+# =============================================================================
+# Room Assignment Operations
+# =============================================================================
 
 def create_room_assignment(
     db: Session,
@@ -395,6 +438,7 @@ def create_room_assignment(
     guest_id: UUID,
     assigned_by: UUID | None = None
 ) -> dict:
+    """Create a room assignment (assign a guest to a room)."""
     assignment = RoomAssignment(
         reservation_id=reservation_id,
         room_id=room_id,
@@ -406,13 +450,11 @@ def create_room_assignment(
     db.commit()
     db.refresh(assignment)
 
-    # Eager-load the room and guest relationships for the response
     db.refresh(
         assignment,
         ["room", "guest"]
     )
 
-    # Build response dict with computed fields for Pydantic serialization
     return {
         "id": assignment.id,
         "reservation_id": assignment.reservation_id,
@@ -429,6 +471,7 @@ def get_reservation_room_assignments(
     db: Session,
     reservation_id: UUID
 ) -> list[dict]:
+    """Get all room assignments for a reservation."""
     assignments = (
         db.query(RoomAssignment)
         .options(
@@ -439,7 +482,6 @@ def get_reservation_room_assignments(
         .all()
     )
 
-    # Convert ORM objects to dicts with computed fields
     return [
         {
             "id": assignment.id,
@@ -460,6 +502,7 @@ def get_guest_room_assignment(
     reservation_id: UUID,
     guest_id: UUID
 ) -> RoomAssignment | None:
+    """Get a guest's room assignment for a reservation."""
     return (
         db.query(RoomAssignment)
         .filter(
@@ -474,6 +517,7 @@ def get_room_assignment_count_by_room(
     db: Session,
     room_id: UUID
 ) -> int:
+    """Count assignments for a specific room."""
     return (
         db.query(RoomAssignment)
         .filter(RoomAssignment.room_id == room_id)
@@ -486,6 +530,7 @@ def delete_room_assignment(
     reservation_id: UUID,
     guest_id: UUID
 ) -> RoomAssignment | None:
+    """Delete a room assignment."""
     assignment = (
         db.query(RoomAssignment)
         .filter(
@@ -502,20 +547,17 @@ def delete_room_assignment(
     return assignment
 
 
-def get_room_by_id(
-    db: Session,
-    room_id: UUID
-) -> Room | None:
-    return (
-        db.query(Room)
-        .filter(Room.id == room_id)
-        .first()
-    )
+# =============================================================================
+# Invoice Tracking Operations
+# =============================================================================
 
+# Statuses eligible for billing/invoicing
+BILLABLE_STATUSES = {
+    ReservationStatusEnum.CONFIRMED,
+    ReservationStatusEnum.CHECKED_IN,
+    ReservationStatusEnum.COMPLETED
+}
 
-# =========================================================
-# INVOICE TRACKING REPOSITORY FUNCTIONS
-# =========================================================
 
 def get_uninvoiced_reservations(
     db: Session,
@@ -523,19 +565,11 @@ def get_uninvoiced_reservations(
     contract_id: UUID | None = None
 ) -> list[Reservation]:
     """
-    Retrieve reservations that are eligible for billing but have not been invoiced.
-
+    Retrieve reservations eligible for billing but not yet invoiced.
+    
     Returns reservations where:
     - invoice_id IS NULL (not yet invoiced)
     - status is in BILLABLE_STATUSES (eligible for billing)
-
-    Args:
-        db: Database session
-        company_id: Optional filter by company
-        contract_id: Optional filter by contract
-
-    Returns:
-        List of uninvoiced reservations
     """
     query = (
         db.query(Reservation)
@@ -570,25 +604,13 @@ def get_uninvoiced_reservations_by_period(
 ) -> list[Reservation]:
     """
     Retrieve uninvoiced reservations within a specific billing period.
-
+    
     Returns reservations where:
     - belong to the provided company
     - invoice_id IS NULL (not yet invoiced)
     - status is in BILLABLE_STATUSES (eligible for billing)
     - start_date >= period_start (reservation starts on or after period start)
     - end_date <= period_end (reservation ends on or before period end)
-
-    This ensures only reservations that fall completely inside the billing period
-    are returned, preventing partial period invoices.
-
-    Args:
-        db: Database session
-        company_id: The company to filter by
-        period_start: Start date of the billing period
-        period_end: End date of the billing period
-
-    Returns:
-        List of uninvoiced reservations within the billing period
     """
     query = (
         db.query(Reservation)
@@ -611,13 +633,13 @@ def get_uninvoiced_reservations_by_period(
 
     return query.all()
 
-# Associate invoice with reservations
+
 def assign_invoice_to_reservations(
     db: Session,
     reservation_ids: list[UUID],
     invoice_id: UUID
 ) -> None:
-
+    """Associate an invoice with multiple reservations."""
     (
         db.query(Reservation)
         .filter(
@@ -632,5 +654,3 @@ def assign_invoice_to_reservations(
     )
 
     db.flush()
-
-# End file:

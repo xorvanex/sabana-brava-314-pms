@@ -1,6 +1,11 @@
 # File path: backend/app/reservations/reservation_scheme.py
 
-# Start file:
+"""
+Reservation schema definitions module.
+
+This module provides Pydantic schemas for reservation data validation
+and API responses.
+"""
 
 from uuid import UUID
 from datetime import date, datetime
@@ -12,9 +17,12 @@ from app.companies.company_scheme import CompanyBasicResponse
 from app.reservations.reservation_model import ReservationStatusEnum
 
 
-# Schema for reservation creation
-class ReservationCreate(BaseModel):
+# =============================================================================
+# Create Schemas
+# =============================================================================
 
+class ReservationCreate(BaseModel):
+    """Schema for creating a new reservation."""
     company_id: UUID
     contract_id: UUID
 
@@ -29,23 +37,28 @@ class ReservationCreate(BaseModel):
     room_ids: list[UUID] = Field(default_factory=list)
 
 
-# Schema for reservation updates
-class ReservationUpdate(BaseModel):
+# =============================================================================
+# Update Schemas
+# =============================================================================
 
+class ReservationUpdate(BaseModel):
+    """Schema for updating an existing reservation."""
     start_date: Optional[date] = None
     end_date: Optional[date] = None
 
-    # Agrega "default=" explícitamente aquí
     guest_count: Optional[int] = Field(default=None, gt=0)
     status: Optional[ReservationStatusEnum] = None
-    # Agrega "default=" explícitamente aquí
     notes: Optional[str] = Field(default=None, max_length=5000)
 
     room_ids: Optional[list[UUID]] = None
 
 
-class ReservationContractResponse(BaseModel):
+# =============================================================================
+# Response Schemas
+# =============================================================================
 
+class ReservationContractResponse(BaseModel):
+    """Contract information in reservation responses."""
     id: UUID
     contract_number: str
     start_date: date
@@ -57,7 +70,7 @@ class ReservationContractResponse(BaseModel):
 
 
 class ReservationRoomResponse(BaseModel):
-
+    """Room information in reservation responses."""
     id: UUID
     room_number: str
     description: Optional[str]
@@ -69,15 +82,8 @@ class ReservationRoomResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# SCHEMAS: Reservation Guest Assignment
-# =========================================================
-
-class ReservationGuestAssign(BaseModel):
-    guest_ids: list[UUID] = Field(default_factory=list)
-
-
 class ReservationGuestResponse(BaseModel):
+    """Guest information in reservation responses."""
     id: UUID
 
     first_name: str
@@ -92,9 +98,9 @@ class ReservationGuestResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# Schema for reservation API responses
-class ReservationResponse(BaseModel):
 
+class ReservationResponse(BaseModel):
+    """Full reservation response schema."""
     id: UUID
 
     company: CompanyBasicResponse
@@ -118,16 +124,23 @@ class ReservationResponse(BaseModel):
         from_attributes = True
 
 
-# =========================================================
-# SCHEMAS: Room Assignment
-# =========================================================
+# =============================================================================
+# Utility Schemas
+# =============================================================================
+
+class ReservationGuestAssign(BaseModel):
+    """Schema for assigning guests to a reservation."""
+    guest_ids: list[UUID] = Field(default_factory=list)
+
 
 class RoomAssignmentCreate(BaseModel):
+    """Schema for creating a room assignment."""
     guest_id: UUID
     room_id: UUID
 
 
 class RoomAssignmentResponse(BaseModel):
+    """Schema for room assignment responses."""
     id: UUID
     reservation_id: UUID
     room_id: UUID
@@ -139,6 +152,3 @@ class RoomAssignmentResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
-# End file:
