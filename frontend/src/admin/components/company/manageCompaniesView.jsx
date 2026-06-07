@@ -30,14 +30,23 @@ export default function ManageCompaniesView() {
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-emerald-900">Gestionar empresas</h1>
-        <div className="flex gap-2">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold tracking-tight text-emerald-950">
+            Gestionar Empresas
+          </h1>
+          <p className="text-sm text-gray-500">
+            Administre los datos y configuraciones de las empresas asociadas.
+          </p>
+        </div>
+        <div className="flex gap-1.5 bg-slate-100/80 p-1.5 rounded-xl w-fit self-start sm:self-center border border-slate-200/50">
           <button
             type="button"
             onClick={() => handleViewModeChange("register")}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-              viewMode === "register" ? "bg-emerald-700 text-white" : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150 cursor-pointer ${
+              viewMode === "register"
+                ? "bg-emerald-700 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Registrar empresa
@@ -45,8 +54,10 @@ export default function ManageCompaniesView() {
           <button
             type="button"
             onClick={() => handleViewModeChange("consult")}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-              viewMode === "consult" ? "bg-emerald-700 text-white" : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-150 cursor-pointer ${
+              viewMode === "consult"
+                ? "bg-emerald-700 text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Consultar empresa

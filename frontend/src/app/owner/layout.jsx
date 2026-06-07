@@ -10,7 +10,7 @@ export default function OwnerLayout({ children }) {
   return (
     <AppShell
       menuItems={menuItems}
-      title="Owner Panel"
+      title="Panel-propietaria"
       dashboardHref={ROUTES.OWNER_HOME}
     >
       {children}

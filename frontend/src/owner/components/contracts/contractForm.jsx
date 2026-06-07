@@ -188,7 +188,7 @@ export default function ContractForm({ company, onBack, onPreviewGenerated }) {
   return (
     <div className="space-y-6">
 
-            {/* Modal: fechas superpuestas en contrato de la empresa */}
+      {/* Modal: fechas superpuestas en contrato de la empresa */}
       {overlapModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
