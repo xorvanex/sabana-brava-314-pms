@@ -2,6 +2,7 @@
 
 # Start file:
 
+from datetime import date
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -173,6 +174,25 @@ def cancel_invoice(
         }
     )
 
+
+# Retrieve invoice by company and period
+# Used to prevent duplicate invoices for the same company and period
+def get_invoice_by_company_and_period(
+    db: Session,
+    company_id: UUID,
+    period_start: date,
+    period_end: date
+) -> Invoice | None:
+
+    return (
+        db.query(Invoice)
+        .filter(
+            Invoice.company_id == company_id,
+            Invoice.period_start == period_start,
+            Invoice.period_end == period_end
+        )
+        .first()
+    )
 
 
 # End file:

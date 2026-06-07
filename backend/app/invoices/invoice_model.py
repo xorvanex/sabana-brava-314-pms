@@ -11,7 +11,8 @@ from sqlalchemy import (
     ForeignKey,
     Numeric,
     Integer,
-    Enum
+    Enum,
+    UniqueConstraint
 )
 
 from sqlalchemy.dialects.postgresql import UUID
@@ -44,6 +45,15 @@ class Invoice(Base):
     """
 
     __tablename__ = "invoices"
+
+    __table_args__ = (
+        UniqueConstraint(
+            "company_id",
+            "period_start",
+            "period_end",
+            name="uq_invoice_company_period"
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 

@@ -111,7 +111,7 @@ class Reservation(Base):
     # ORM relationship with Invoice model
     invoice = relationship(
         "Invoice",
-        back_populates="reservations",
+        back_populates="invoices",
     )
 
     # Audit timestamps

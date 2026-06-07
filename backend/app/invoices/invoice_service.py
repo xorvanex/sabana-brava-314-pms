@@ -58,6 +58,20 @@ def generate_invoice(
             detail="No active contract found for company"
         )
 
+    # Check for existing invoice for this company and period
+    existing_invoice = invoice_repository.get_invoice_by_company_and_period(
+        db,
+        invoice_request.company_id,
+        invoice_request.period_start,
+        invoice_request.period_end
+    )
+
+    if existing_invoice:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Invoice already exists for company in period {invoice_request.period_start} to {invoice_request.period_end}"
+        )
+
     reservations = (
         reservation_repository.get_uninvoiced_reservations_by_period(
             db,
@@ -265,7 +279,7 @@ def cancel_invoice(
     # Extract the value to satisfy the type checker
     current_status: str = str(invoice.invoice_status)  # type: ignore
 
-# Idempotency: if already cancelled, return invoice directly
+    # Idempotency: if already cancelled, return invoice directly
     if current_status == InvoiceStatusEnum.CANCELLED.value:
         return invoice
 
