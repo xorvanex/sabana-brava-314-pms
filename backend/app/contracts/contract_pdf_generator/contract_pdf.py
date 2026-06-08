@@ -1,18 +1,20 @@
-# File path: backend/app/contracts/contract_pdf_generator/contract_pdf.py
-
 """
-Specialized module for generating PDFs for contracts.
-It handles all the logic for rendering contracts in PDF format.
+Contract PDF generation module.
+
+Handles all logic for rendering contracts in PDF format.
 """
 
+# Standard library
 from datetime import datetime
 from io import BytesIO
 from uuid import UUID
 
+# Third-party
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
+# ReportLab
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
@@ -22,6 +24,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.units import inch
 
+# Local imports
 from .contract_pdf_styles import (
     ContractPDFStyles,
     ContractPDFColors,
@@ -30,10 +33,16 @@ from .contract_pdf_styles import (
 )
 
 
+# ============================================================================
+# PDF Generator
+# ============================================================================
+
 class ContractPDFGenerator:
     """
-    Class responsible for generating PDFs for contracts.
-It encapsulates all the rendering logic and document structure.
+    Contract PDF generator.
+    
+    Encapsulates all rendering logic and document structure
+    for generating contract PDF documents.
     """
 
     def __init__(self, contract, company):
@@ -41,8 +50,8 @@ It encapsulates all the rendering logic and document structure.
         Initialize the generator with contract and company data.
         
         Args:
-            contract: Subject of the database contract
-            company: Purpose of the company associated with the contract
+            contract: Instance of the database contract
+            company: Instance of the company associated with the contract
         """
         self.contract = contract
         self.company = company
@@ -57,15 +66,15 @@ It encapsulates all the rendering logic and document structure.
         filename: str | None = None
     ) -> StreamingResponse:
         """
-        Generates the PDF of the contract and returns a streaming response.
+        Generate the PDF of the contract.
         
         Returns:
             StreamingResponse: PDF ready for download
         """
-        # Crear buffer en memoria para el PDF
+        # Create in-memory buffer for the PDF
         pdf_buffer = BytesIO()
 
-        # Configurar documento PDF con márgenes profesionales
+        # Configure PDF document with standard margins
         pdf = SimpleDocTemplate(
             pdf_buffer,
             pagesize=(8.5*inch, 11*inch),
@@ -76,7 +85,7 @@ It encapsulates all the rendering logic and document structure.
             title=f"Contrato_{self.contract.contract_number}"
         )
 
-        # Construir contenido del PDF
+        # Build the PDF content
         content = []
         content.extend(self._build_header())
         content.extend(self._build_company_info())
@@ -87,13 +96,13 @@ It encapsulates all the rendering logic and document structure.
         content.extend(self._build_signatures())
         content.extend(self._build_footer())
 
-        # Generar PDF en memoria
+        # Generate PDF in memory
         pdf.build(content)
         pdf_buffer.seek(0)
 
         pdf_filename = filename or f"contract_{self.contract.contract_number}.pdf"
 
-        # Retornar respuesta con streaming
+        # Return streaming response
         return StreamingResponse(
             pdf_buffer,
             media_type="application/pdf",
@@ -103,17 +112,23 @@ It encapsulates all the rendering logic and document structure.
             }
         )
 
+
+# ============================================================================
+# Header Builders
+# ============================================================================
+
     def _build_header(self) -> list:
         """
-        Create the contract header section.
-        Include the hotel name, document type, and general information.
+        Build the contract header section.
+        
+        Includes hotel name, document type, and general information.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Nombre del hotel
+        # Hotel name
         content.append(
             Paragraph(
                 "<b>HOTEL SABANA BRAVA 314</b>",
@@ -121,7 +136,7 @@ It encapsulates all the rendering logic and document structure.
             )
         )
 
-        # Tipo de contrato
+        # Document type
         content.append(
             Paragraph(
                 "CONTRATO DE HOSPEDAJE CORPORATIVO",
@@ -130,7 +145,7 @@ It encapsulates all the rendering logic and document structure.
         )
         content.append(Spacer(1, self.dimensions.SPACE_SMALL*inch))
 
-        # Tabla con información general del contrato
+        # Contract metadata table
         header_data = [[
             Paragraph(
                 f"<b>No. de Contrato:</b><br/>{self.contract.contract_number}",
@@ -153,21 +168,26 @@ It encapsulates all the rendering logic and document structure.
 
         return content
 
+
+# ============================================================================
+# Contract Information Builders
+# ============================================================================
+
     def _build_company_info(self) -> list:
         """
-        Build the section with information from the client company.
+        Build the company information section.
         
         Returns:
-            list: Lista de elementos para agregar al PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Título de sección
+        # Section title
         content.append(
             Paragraph("<b>1. INFORMACIÓN DEL CLIENTE</b>", self.styles.get_heading_style())
         )
 
-        # Datos de la empresa en tabla
+        # Company data table
         company_data = [
             [
                 Paragraph("<b>Razón Social:</b>", self.styles.get_label_style()),
@@ -215,23 +235,24 @@ It encapsulates all the rendering logic and document structure.
 
     def _build_contract_details(self) -> list:
         """
-        Create the section with contract details.
-Include dates, rates, and duration.
+        Build the contract details section.
+        
+        Includes dates, rates, and duration.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Título de sección
+        # Section title
         content.append(
             Paragraph("<b>2. DETALLES DEL CONTRATO</b>", self.styles.get_heading_style())
         )
 
-        # Calcular duración del contrato
+        # Calculate contract duration
         contract_duration = (self.contract.end_date - self.contract.start_date).days
 
-        # Datos del contrato en tabla
+        # Contract data table
         contract_data = [
             [
                 Paragraph("<b>Fecha de Inicio:</b>", self.styles.get_label_style()),
@@ -270,12 +291,19 @@ Include dates, rates, and duration.
 
         return content
 
+
+# ============================================================================
+# Room Assignment Builders
+# ============================================================================
+
     def _build_rooms(self) -> list:
         """
-        Build the section with rooms associated with the contract.
+        Build the rooms section.
+        
+        Renders rooms associated with the contract.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
@@ -310,19 +338,19 @@ Include dates, rates, and duration.
 
     def _build_terms_and_conditions(self) -> list:
         """
-        Build the section with the terms and conditions of the contract.
+        Build the terms and conditions section.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Título de sección
+        # Section title
         content.append(
             Paragraph("<b>4. TÉRMINOS Y CONDICIONES</b>", self.styles.get_heading_style())
         )
 
-        # Mostrar términos o texto por defecto
+        # Display terms or default text
         if self.contract.terms and self.contract.terms.strip():
             terms_text = self.contract.terms.replace("\n", "<br/>&nbsp;&nbsp;&nbsp;")
             content.append(
@@ -343,11 +371,12 @@ Include dates, rates, and duration.
 
     def _build_additional_notes(self) -> list:
         """
-        Build the section with additional contract notes.
-It will only be displayed if there is content.
+        Build the additional notes section.
+        
+        Only rendered if content exists.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
@@ -366,26 +395,32 @@ It will only be displayed if there is content.
 
         return content
 
+
+# ============================================================================
+# Signature Builders
+# ============================================================================
+
     def _build_signatures(self) -> list:
         """
-        Create the signature section of the contract.
-        Include spaces for both parties' signatures.
+        Build the signature section.
+        
+        Includes signature spaces for both parties.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Espacio antes de firmas
+        # Spacing before signatures
         content.append(Spacer(1, self.dimensions.SPACE_LARGE*inch))
 
-        # Título de sección
+        # Section title
         content.append(
             Paragraph("<b>6. FIRMAS DE ACEPTACIÓN</b>", self.styles.get_heading_style())
         )
         content.append(Spacer(1, self.dimensions.SPACE_MEDIUM*inch))
 
-        # Tabla de firmas
+        # Signature table
         signature_data = [
             [
                 Paragraph("<b>POR LA EMPRESA CLIENTE</b>", self.styles.get_label_style()),
@@ -431,17 +466,23 @@ It will only be displayed if there is content.
 
         return content
 
+
+# ============================================================================
+# Footer Builders
+# ============================================================================
+
     def _build_footer(self) -> list:
         """
-        Create the contract footer.
-    Include legal and generation information.
+        Build the footer section.
+        
+        Includes legal and generation information.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Línea divisoria
+        # Divider line
         footer_line = Paragraph(
             "_" * 80,
             self.styles.get_footer_style()
@@ -449,7 +490,7 @@ It will only be displayed if there is content.
         content.append(footer_line)
         content.append(Spacer(1, 0.05*inch))
 
-        # Texto de descargo legal
+        # Legal disclaimer
         content.append(
             Paragraph(
                 "<i>Este contrato ha sido generado electrónicamente por el Sistema de Gestión "
@@ -462,29 +503,33 @@ It will only be displayed if there is content.
         return content
 
 
+# ============================================================================
+# Public Helper Functions
+# ============================================================================
+
 def generate_contract_pdf(
     db: Session,
     contract_id: UUID,
     contract_repository,
 ) -> StreamingResponse:
     """
-    Public function to generate a PDF of a contract.
+    Generate a PDF of a contract.
     
-    This function serves as an entry point from the contracts service.
-    Verify that the contract exists and delegate the generation to the specialized generator.
+    Entry point from the contracts service. Verifies contract exists
+    and delegates generation to the specialized generator.
     
     Args:
         db: Database session
-        contract_id: ID of the contract to be generated
-        contract_repository: Contract repository for database consultation
+        contract_id: ID of the contract to generate
+        contract_repository: Contract repository for database lookup
         
     Returns:
-        StreamingResponse: PDF of the contract ready for download
+        StreamingResponse: PDF ready for download
         
     Raises:
-        HTTPException: If the contract does not exist
+        HTTPException: If contract not found
     """
-    # Validar existencia del contrato
+    # Validate contract exists
     contract = contract_repository.get_contract_by_id(db, contract_id)
 
     if not contract:
@@ -493,10 +538,10 @@ def generate_contract_pdf(
             detail="Contract not found"
         )
 
-    # Obtener empresa asociada
+    # Get associated company
     company = contract.company
 
-    # Crear generador y obtener PDF
+    # Create generator and return PDF
     generator = ContractPDFGenerator(contract, company)
     return generator.generate()
 
@@ -506,13 +551,12 @@ def generate_contract_preview_pdf(
     company,
 ) -> StreamingResponse:
     """
-    Generate a preview PDF without consulting or persisting a contract.
+    Generate a contract preview PDF.
+    
+    Creates a PDF without persisting to database.
     """
     generator = ContractPDFGenerator(contract, company)
     return generator.generate(
         content_disposition="inline",
         filename='"contract_preview.pdf"'
     )
-
-
-# End file:
