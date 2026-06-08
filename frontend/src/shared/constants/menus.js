@@ -23,7 +23,6 @@ export const ADMIN_MENU = [
 export const RECEPTIONIST_MENU = [
   { label: "Dashboard", href: ROUTES.RECEPTIONIST_HOME },
   { label: "Consultar disponibilidad", href: ROUTES.RECEPTIONIST_AVAILABILITY },
-  { label: "Check In", href: ROUTES.RECEPTIONIST_CHECKIN },
-  { label: "Registrar reserva", href: ROUTES.RECEPTIONIST_RESERVATION },
+  { label: "Check In / Check Out", href: ROUTES.RECEPTIONIST_CHECKIN },  { label: "Registrar reserva", href: ROUTES.RECEPTIONIST_RESERVATION },
   { label: "Consultar reservas", href: ROUTES.RECEPTIONIST_CHECK_RESERVATIONS },
 ];
