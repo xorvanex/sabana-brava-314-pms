@@ -1,114 +1,27 @@
-# File path: backend/app/contracts/contract_pdf_generator/contract_pdf_styles.py
-
-# Start file:
-
 """
-Style module for contract PDF generation.
-Centralizes styles and colors to keep visual consistency
-across generated contract PDF documents.
+Contract PDF style definitions.
+
+Centralizes styles and colors to maintain visual consistency
+across all generated contract PDF documents.
 """
 
+# ReportLab
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 
 
-class ContractPDFStyles:
-    """Reusable text styles for contract PDFs"""
-    
-    @staticmethod
-    def get_title_style():
-        """
-        Main document title style
-        Returns the style used by primary headings
-        """
-        style = getSampleStyleSheet()["Heading1"]
-        style.fontSize = 16
-        style.textColor = colors.HexColor("#1a1a1a")
-        style.spaceAfter = 6
-        style.alignment = TA_CENTER
-        style.fontName = "Helvetica-Bold"
-        return style
-
-    @staticmethod
-    def get_subtitle_style():
-        """
-        Subtitle style
-        Used for document types and primary subtitles
-        """
-        style = getSampleStyleSheet()["Heading2"]
-        style.fontSize = 12
-        style.textColor = colors.HexColor("#34495e")
-        style.spaceAfter = 10
-        style.alignment = TA_CENTER
-        style.fontName = "Helvetica-Bold"
-        return style
-
-    @staticmethod
-    def get_heading_style():
-        """
-        Section heading style
-        Used for numbered headings such as 1. Information or 2. Details
-        """
-        style = getSampleStyleSheet()["Heading3"]
-        style.fontSize = 11
-        style.textColor = colors.HexColor("#2c3e50")
-        style.spaceAfter = 8
-        style.spaceBefore = 12
-        style.fontName = "Helvetica-Bold"
-        return style
-
-    @staticmethod
-    def get_normal_style():
-        """
-        Body content style
-        Used for regular paragraphs and descriptive content
-        """
-        style = getSampleStyleSheet()["BodyText"]
-        style.fontSize = 10
-        style.alignment = TA_JUSTIFY
-        style.spaceAfter = 6
-        style.leading = 14
-        return style
-
-    @staticmethod
-    def get_label_style():
-        """
-        Table label style
-        Used for field labels inside tables
-        """
-        style = getSampleStyleSheet()["Normal"]
-        style.fontSize = 10
-        style.textColor = colors.HexColor("#34495e")
-        style.fontName = "Helvetica-Bold"
-        return style
-
-    @staticmethod
-    def get_footer_style():
-        """
-        Footer text style
-        Used for secondary information at the end of the document
-        """
-        style = getSampleStyleSheet()["Normal"]
-        style.fontSize = 7.5
-        style.textColor = colors.HexColor("#7f8c8d")
-        style.alignment = TA_CENTER
-        return style
-
-    @staticmethod
-    def get_small_text_style():
-        """
-        Small text style
-        Used in notes and references
-        """
-        style = getSampleStyleSheet()["Normal"]
-        style.fontSize = 8.5
-        style.textColor = colors.HexColor("#7f8c8d")
-        return style
-
+# ============================================================================
+# Color Configuration
+# ============================================================================
 
 class ContractPDFColors:
-    """Color palette for contract PDFs"""
+    """
+    Color palette for contract PDFs.
+    
+    Professional blue-gray palette optimized for
+    readability and formal document presentation.
+    """
     
     PRIMARY_DARK = colors.HexColor("#1a1a1a")        # Deep black
     SECONDARY_DARK = colors.HexColor("#2c3e50")      # Dark blue-gray
@@ -121,12 +34,135 @@ class ContractPDFColors:
     BLACK = colors.black
 
 
+# ============================================================================
+# Typography Configuration
+# ============================================================================
+
+class ContractPDFStyles:
+    """
+    Reusable text styles for contract PDFs.
+    
+    Typography definitions for hierarchical document structure
+    including titles, headings, body text, and specialized labels.
+    """
+    
+    @staticmethod
+    def get_title_style():
+        """
+        Main document title style.
+        
+        Returns the style used by primary headings.
+        """
+        style = getSampleStyleSheet()["Heading1"]
+        style.fontSize = 16
+        style.textColor = colors.HexColor("#1a1a1a")
+        style.spaceAfter = 6
+        style.alignment = TA_CENTER
+        style.fontName = "Helvetica-Bold"
+        return style
+
+    @staticmethod
+    def get_subtitle_style():
+        """
+        Subtitle style.
+        
+        Used for document types and primary subtitles.
+        """
+        style = getSampleStyleSheet()["Heading2"]
+        style.fontSize = 12
+        style.textColor = colors.HexColor("#34495e")
+        style.spaceAfter = 10
+        style.alignment = TA_CENTER
+        style.fontName = "Helvetica-Bold"
+        return style
+
+    @staticmethod
+    def get_heading_style():
+        """
+        Section heading style.
+        
+        Used for numbered headings such as 1. Information or 2. Details.
+        """
+        style = getSampleStyleSheet()["Heading3"]
+        style.fontSize = 11
+        style.textColor = colors.HexColor("#2c3e50")
+        style.spaceAfter = 8
+        style.spaceBefore = 12
+        style.fontName = "Helvetica-Bold"
+        return style
+
+    @staticmethod
+    def get_normal_style():
+        """
+        Body content style.
+        
+        Used for regular paragraphs and descriptive content.
+        """
+        style = getSampleStyleSheet()["BodyText"]
+        style.fontSize = 10
+        style.alignment = TA_JUSTIFY
+        style.spaceAfter = 6
+        style.leading = 14
+        return style
+
+    @staticmethod
+    def get_label_style():
+        """
+        Table label style.
+        
+        Used for field labels inside tables.
+        """
+        style = getSampleStyleSheet()["Normal"]
+        style.fontSize = 10
+        style.textColor = colors.HexColor("#34495e")
+        style.fontName = "Helvetica-Bold"
+        return style
+
+    @staticmethod
+    def get_footer_style():
+        """
+        Footer text style.
+        
+        Used for secondary information at the end of the document.
+        """
+        style = getSampleStyleSheet()["Normal"]
+        style.fontSize = 7.5
+        style.textColor = colors.HexColor("#7f8c8d")
+        style.alignment = TA_CENTER
+        return style
+
+    @staticmethod
+    def get_small_text_style():
+        """
+        Small text style.
+        
+        Used in notes and references.
+        """
+        style = getSampleStyleSheet()["Normal"]
+        style.fontSize = 8.5
+        style.textColor = colors.HexColor("#7f8c8d")
+        return style
+
+
+# ============================================================================
+# Table Styles
+# ============================================================================
+
 class ContractPDFTableStyles:
-    """Reusable table styles for contract PDFs"""
+    """
+    Reusable table styles for contract PDFs.
+    
+    Table formatting for different content sections
+    including headers, data rows, and signature blocks.
+    """
     
     @staticmethod
     def get_header_table_style():
-        """Header table style for number, date, and status"""
+        """
+        Header table style for number, date, and status.
+        
+        Table styling for contract metadata section.
+        """
         return [
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -140,7 +176,11 @@ class ContractPDFTableStyles:
 
     @staticmethod
     def get_data_table_style():
-        """Data table style for information and details"""
+        """
+        Data table style for information and details.
+        
+        Table styling for company, contract, and room information.
+        """
         return [
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
             ('ALIGN', (1, 0), (1, -1), 'LEFT'),
@@ -148,7 +188,7 @@ class ContractPDFTableStyles:
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
             ('ROWBACKGROUNDS', (0, 0), (-1, -1), 
-             [ContractPDFColors.WHITE, ContractPDFColors.LIGHT_GRAY]),
+            [ContractPDFColors.WHITE, ContractPDFColors.LIGHT_GRAY]),
             ('GRID', (0, 0), (-1, -1), 0.5, ContractPDFColors.MEDIUM_GRAY),
             ('LEFTPADDING', (0, 0), (-1, -1), 10),
             ('RIGHTPADDING', (0, 0), (-1, -1), 10),
@@ -158,7 +198,11 @@ class ContractPDFTableStyles:
 
     @staticmethod
     def get_signature_table_style():
-        """Signature table style"""
+        """
+        Signature table style.
+        
+        Table styling for contract signature blocks.
+        """
         return [
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('ALIGN', (1, 0), (1, -1), 'CENTER'),
@@ -169,8 +213,17 @@ class ContractPDFTableStyles:
         ]
 
 
+# ============================================================================
+# Public Style Factories
+# ============================================================================
+
 class ContractPDFDimensions:
-    """Standard dimensions for contract PDFs"""
+    """
+    Standard dimensions for contract PDFs.
+    
+    Layout constants for margins, spacing, and table column widths
+    ensuring consistent document appearance.
+    """
     
     # Standard margins
     MARGIN = 0.75  # Inches
@@ -186,5 +239,3 @@ class ContractPDFDimensions:
     HALF_WIDTH = 3.5
     THIRD_WIDTH = 2.33
     QUARTER_WIDTH = 1.75
-
-# End file:
