@@ -25,4 +25,5 @@ export const RECEPTIONIST_MENU = [
   { label: "Consultar disponibilidad", href: ROUTES.RECEPTIONIST_AVAILABILITY },
   { label: "Check In", href: ROUTES.RECEPTIONIST_CHECKIN },
   { label: "Registrar reserva", href: ROUTES.RECEPTIONIST_RESERVATION },
+  { label: "Consultar reservas", href: ROUTES.RECEPTIONIST_CHECK_RESERVATIONS },
 ];
