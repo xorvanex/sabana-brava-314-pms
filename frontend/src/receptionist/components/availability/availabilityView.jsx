@@ -133,7 +133,6 @@ export default function AvailabilityView() {
   return (
     <div className="space-y-6">
 
-      {/* Tooltip global — renderizado en la raíz, nunca se corta */}
       {tooltip.visible && tooltip.reserva && (
         <div
           className="fixed z-[9999] bg-gray-900 text-white rounded-lg p-3 text-xs w-52 shadow-2xl pointer-events-none"
@@ -152,19 +151,16 @@ export default function AvailabilityView() {
             <div>👥 Huéspedes: {tooltip.reserva.guest_count}</div>
             <div>📌 Estado: {tooltip.reserva.status}</div>
           </div>
-          {/* Flechita apuntando hacia abajo */}
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
         </div>
       )}
 
-      {/* Cabecera */}
       <div className="border-b border-emerald-50 pb-5">
         <h1 className="text-3xl font-extrabold text-emerald-900 tracking-tight">
           Consultar Disponibilidad
         </h1>
       </div>
 
-      {/* Formulario de búsqueda */}
       <form onSubmit={handleConsultar} className="rounded-2xl border border-emerald-100 bg-emerald-50/20 p-5 shadow-inner">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
@@ -213,11 +209,11 @@ export default function AvailabilityView() {
         )}
       </form>
 
-      {/* Grid del Calendario Mensual */}
+      
       {consultado && !loading && (
         <div className="space-y-4">
 
-          {/* Navegador del Mes */}
+        
           <div className="flex items-center justify-between bg-emerald-800 text-white rounded-xl p-4 shadow-md">
             <button
               onClick={handlePrevMonth}
@@ -244,7 +240,7 @@ export default function AvailabilityView() {
             </button>
           </div>
 
-          {/* Tabla de Disponibilidad */}
+        
           <div className="overflow-x-auto rounded-2xl border border-emerald-100 shadow-sm bg-white">
             <table className="w-full border-collapse text-left min-w-[800px]">
               <thead>
@@ -332,7 +328,7 @@ export default function AvailabilityView() {
             </table>
           </div>
 
-          {/* Leyenda */}
+      
           <div className="flex flex-wrap gap-4 text-xs font-bold text-gray-500 bg-gray-50 rounded-xl p-4 border border-gray-150">
             <span className="flex items-center gap-1.5">
               <span className="h-3.5 w-3.5 rounded bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-800 text-[8px] font-black">DIS</span> Disponible

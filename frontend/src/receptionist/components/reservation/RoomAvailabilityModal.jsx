@@ -1,4 +1,4 @@
-// src/receptionist/components/reservation/RoomAvailabilityModal.jsx
+
 "use client";
 
 import { useEffect, useState } from "react";

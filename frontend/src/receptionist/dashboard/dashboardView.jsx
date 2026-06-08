@@ -57,7 +57,6 @@ export default function ReceptionistDashboardView() {
 
   return (
     <div className="space-y-6">
-      {/* Saludo de bienvenida */}
       <div className="flex flex-col space-y-1 border-b border-emerald-50 pb-5">
         <h1 className="text-3xl font-extrabold text-emerald-950 tracking-tight">
           ¡Hola, <span className="text-emerald-600 font-black">{nombreUsuario}</span>!

@@ -1,4 +1,4 @@
-// src/receptionist/components/reservation/RegisterReservationView.jsx
+
 "use client";
 import { useState, useEffect } from "react";
 import {
