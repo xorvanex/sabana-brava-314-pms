@@ -206,21 +206,34 @@ export async function getBillingHistory() {
   return [];
 }
 
-export async function generateMonthlyInvoice({ empresaId, mes, anio }) {
-  const paddedMes = String(mes).padStart(2, "0");
-  const lastDay = new Date(anio, mes, 0).getDate();
-  const period_start = `${anio}-${paddedMes}-01`;
-  const period_end = `${anio}-${paddedMes}-${lastDay}`;
-
+export async function generateMonthlyInvoice({ empresaId, period_start, period_end }) {
   const body = new FormData();
   body.append("company_id", empresaId);
-  body.append("period_start", period_start);
-  body.append("period_end", period_end);
+  body.append("period_start", period_start); 
+  body.append("period_end", period_end);     
 
   const response = await fetch(`${API_URL}/invoices/generate`, {
     method: "POST",
     headers: authHeaders(),
     body,
   });
-  return parseResponse(response, "Error al generar la factura mensual"); // ← usa parseResponse
+  return parseResponse(response, "Error al generar la factura mensual");
+}
+
+// ─── CONTRACTS ───────────────────────────────────────────────────────────────
+
+export async function getContractsByCompany(companyId) {
+  const response = await fetch(`${API_URL}/contracts/company/${companyId}`, {
+    headers: authHeaders(),
+  });
+  return parseResponse(response, "Error al obtener contratos de la empresa");
+}
+
+// ─── RESERVATIONS ─────────────────────────────────────────────────────────────
+
+export async function getReservationsByCompany(companyId) {
+  const response = await fetch(`${API_URL}/reservations/company/${companyId}`, {
+    headers: authHeaders(),
+  });
+  return parseResponse(response, "Error al obtener reservas de la empresa");
 }

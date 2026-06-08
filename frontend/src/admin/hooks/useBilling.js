@@ -1,38 +1,61 @@
 import { useEffect, useState } from "react";
 import {
   getAllCompanies,
+  getContractsByCompany,
+  getReservationsByCompany,
   generateMonthlyInvoice,
-  getBillingHistory,
 } from "@/admin/services/admin.services";
 
 export function useBilling() {
   const [companies, setCompanies] = useState([]);
-  const [invoices, setInvoices] = useState([]);
+  const [contracts, setContracts] = useState([]);
+  const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingContracts, setLoadingContracts] = useState(false);
+  const [loadingReservations, setLoadingReservations] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [companiesData, invoicesData] = await Promise.all([
-          getAllCompanies(),
-          getBillingHistory(),
-        ]);
-        setCompanies(companiesData);
-        setInvoices(invoicesData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error al cargar datos de facturación");
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
+    getAllCompanies()
+      .then(setCompanies)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleGenerate = async ({ empresaId, mes, anio }) => {
-    const invoice = await generateMonthlyInvoice({ empresaId, mes, anio });
-    return invoice;
+  const loadContracts = async (companyId) => {
+    setContracts([]);
+    setReservations([]);
+    setLoadingContracts(true);
+    try {
+      const data = await getContractsByCompany(companyId);
+      setContracts(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingContracts(false);
+    }
   };
 
-  return { companies, invoices, loading, error, handleGenerate };
+  const loadReservations = async (companyId) => {
+    setReservations([]);
+    setLoadingReservations(true);
+    try {
+      const data = await getReservationsByCompany(companyId);
+      setReservations(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoadingReservations(false);
+    }
+  };
+
+  const handleGenerate = async ({ empresaId, period_start, period_end }) => {
+    return generateMonthlyInvoice({ empresaId, period_start, period_end });
+  };
+
+  return {
+    companies, contracts, reservations,
+    loading, loadingContracts, loadingReservations,
+    error, loadContracts, loadReservations, handleGenerate,
+  };
 }
