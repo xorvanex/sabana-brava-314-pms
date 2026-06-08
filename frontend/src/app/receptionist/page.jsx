@@ -1,4 +1,4 @@
-import ReceptionistDashboardView from "@/receptionist/dashboard/dashboardView";
+import ReceptionistDashboardView from "@/receptionist/components/dashboard/dashboardView";
 
 export default function ReceptionistPage() {
   return <ReceptionistDashboardView />;
