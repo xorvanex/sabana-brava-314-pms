@@ -5,129 +5,238 @@ import AdminErrorModal from "@/admin/components/ui/AdminErrorModal";
 import AdminInfoBanner from "@/admin/components/ui/AdminInfoBanner";
 import AdminSuccessBanner from "@/admin/components/ui/AdminSuccessBanner";
 import { useAdminErrorModal } from "@/admin/hooks/useAdminErrorModal";
-import { validateInvoiceForm } from "@/admin/utils/parseApiError";
 import { formatInvoiceStatus } from "@/admin/utils/formatLabels";
 import { useBilling } from "@/admin/hooks/useBilling";
 import Button from "@/shared/globalComponents/ui/button/Button";
 import Spinner from "@/shared/globalComponents/ui/spinner/Spinner";
 
+// ── helpers ──────────────────────────────────────────────────────────────────
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("es-CO", {
+    day: "2-digit", month: "short", year: "numeric",
+  });
+}
+
+function StepBadge({ number, label, active, done }) {
+  return (
+    <div className={`flex items-center gap-2 text-sm font-medium ${done ? "text-emerald-700" : active ? "text-emerald-900" : "text-gray-400"}`}>
+      <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${done ? "bg-emerald-600 text-white" : active ? "bg-emerald-900 text-white" : "bg-gray-200 text-gray-500"}`}>
+        {done ? "✓" : number}
+      </span>
+      {label}
+    </div>
+  );
+}
+
+// ── componente principal ──────────────────────────────────────────────────────
 export default function GenerateInvoiceView() {
-  const { companies, loading, error, handleGenerate } = useBilling();
+  const {
+    companies, contracts, reservations,
+    loading, loadingContracts, loadingReservations,
+    error, loadContracts, loadReservations, handleGenerate,
+  } = useBilling();
+
   const { errorModal, showError, closeError } = useAdminErrorModal();
+
+  const [step, setStep] = useState(1);
   const [empresaId, setEmpresaId] = useState("");
-  const [mes, setMes] = useState(String(new Date().getMonth() + 1));
-  const [anio, setAnio] = useState(String(new Date().getFullYear()));
+  const [contractId, setContractId] = useState("");
+  const [reservationId, setReservationId] = useState("");
   const [success, setSuccess] = useState(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (error) showError(error);
-  }, [error, showError]);
+  }, [error]);
 
-  const selectedCompany = companies.find((c) => c.id === empresaId);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSelectEmpresa = (id) => {
+    setEmpresaId(id);
+    setContractId("");
+    setReservationId("");
+    setStep(2);
+    loadContracts(id);
+    loadReservations(id);
+  };
+
+
+  const handleSelectContract = (id) => {
+    setContractId(id);
+    setReservationId("");
+    setStep(3);
+  };
+
+
+  const handleSubmit = async () => {
+    if (!empresaId || !contractId || !reservationId) return;
     setSuccess(null);
-
-    const validationError = validateInvoiceForm({ empresaId, mes, anio });
-    if (validationError) {
-      showError(validationError, { companyName: selectedCompany?.name });
-      return;
-    }
-
     setSaving(true);
+
+    const reservation = reservations.find((r) => r.id === reservationId);
+    const period_start = reservation.start_date;
+    const period_end = reservation.end_date;
+
     try {
-      const invoice = await handleGenerate({
-        empresaId,
-        mes: Number(mes),
-        anio: Number(anio),
-      });
-      setSuccess(
-        `Factura ${invoice.invoice_number} generada. Estado: ${formatInvoiceStatus(invoice.invoice_status)}.`
-      );
+      const invoice = await handleGenerate({ empresaId, period_start, period_end });
+      setSuccess(`Factura ${invoice.invoice_number} generada. Estado: ${formatInvoiceStatus(invoice.invoice_status)}.`);
+
+      setStep(1);
+      setEmpresaId("");
+      setContractId("");
+      setReservationId("");
     } catch (err) {
       showError(err instanceof Error ? err.message : "No se pudo generar la factura.", {
-        companyName: selectedCompany?.name,
+        companyName: companies.find((c) => c.id === empresaId)?.name,
       });
     } finally {
       setSaving(false);
     }
   };
 
+  const selectedCompany = companies.find((c) => c.id === empresaId);
+  const selectedContract = contracts.find((c) => c.id === contractId);
+  const selectedReservation = reservations.find((r) => r.id === reservationId);
+
   return (
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold text-emerald-900">Generar factura mensual</h1>
 
       <AdminInfoBanner>
-        Requisitos: al menos una reserva en el mes y un contrato vigente. Las facturas nuevas deben quedar en estado{" "}
-        <strong>pendiente de pago</strong> (<code>PENDING</code> en API).
+        Selecciona la empresa, su contrato vigente y la reserva a facturar. La factura quedará en estado{" "}
+        <strong>pendiente de pago</strong>.
       </AdminInfoBanner>
 
-      <div className="max-w-lg rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
-        <AdminSuccessBanner message={success} onDismiss={() => setSuccess(null)} />
+      <AdminSuccessBanner message={success} onDismiss={() => setSuccess(null)} />
 
-        {loading ? (
-          <p className="flex items-center gap-2 text-sm text-gray-500">
-            <Spinner />
-            Cargando empresas...
-          </p>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Empresa</label>
+
+      <div className="flex items-center gap-4 rounded-xl border border-emerald-100 bg-white px-6 py-4 shadow-sm">
+        <StepBadge number={1} label="Empresa" active={step === 1} done={step > 1} />
+        <span className="h-px flex-1 bg-gray-200" />
+        <StepBadge number={2} label="Contrato" active={step === 2} done={step > 2} />
+        <span className="h-px flex-1 bg-gray-200" />
+        <StepBadge number={3} label="Reserva" active={step === 3} done={false} />
+      </div>
+
+      <div className="max-w-lg rounded-xl border border-emerald-100 bg-white p-6 shadow-sm space-y-5">
+
+
+        {step === 1 && (
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Empresa a facturar</label>
+            {loading ? (
+              <p className="flex items-center gap-2 text-sm text-gray-500"><Spinner /> Cargando empresas...</p>
+            ) : (
               <select
                 value={empresaId}
-                onChange={(e) => setEmpresaId(e.target.value)}
+                onChange={(e) => handleSelectEmpresa(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                required
               >
                 <option value="">Seleccionar empresa...</option>
                 {companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} — {c.nit}
-                  </option>
+                  <option key={c.id} value={c.id}>{c.name} — {c.nit}</option>
                 ))}
               </select>
+            )}
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4">
+            {/* resumen empresa */}
+            <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-2 text-sm">
+              <span className="font-medium text-emerald-800">{selectedCompany?.name}</span>
+              <button onClick={() => setStep(1)} className="text-xs text-emerald-600 underline">Cambiar</button>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Mes</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={mes}
-                  onChange={(e) => setMes(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                  required
-                />
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Contrato vigente</label>
+              {loadingContracts ? (
+                <p className="flex items-center gap-2 text-sm text-gray-500"><Spinner /> Cargando contratos...</p>
+              ) : contracts.length === 0 ? (
+                <p className="text-sm text-red-600">Esta empresa no tiene contratos registrados.</p>
+              ) : (
+                <div className="space-y-2">
+                  {contracts.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => handleSelectContract(c.id)}
+                      className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition ${
+                        c.is_active
+                          ? "border-emerald-300 hover:bg-emerald-50"
+                          : "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
+                      }`}
+                      disabled={!c.is_active}
+                    >
+                      <span className="font-medium">{c.contract_number}</span>
+                      <span className="ml-2 text-gray-500">
+                        {formatDate(c.start_date)} → {formatDate(c.end_date)}
+                      </span>
+                      {!c.is_active && <span className="ml-2 text-xs text-gray-400">(inactivo)</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+
+        {step === 3 && (
+          <div className="space-y-4">
+            {/* resumen empresa + contrato */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-2 text-sm">
+                <span className="font-medium text-emerald-800">{selectedCompany?.name}</span>
+                <button onClick={() => setStep(1)} className="text-xs text-emerald-600 underline">Cambiar</button>
               </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Año</label>
-                <input
-                  type="number"
-                  min={2000}
-                  value={anio}
-                  onChange={(e) => setAnio(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                  required
-                />
+              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-2 text-sm">
+                <span className="text-emerald-800">Contrato: <strong>{selectedContract?.contract_number}</strong></span>
+                <button onClick={() => setStep(2)} className="text-xs text-emerald-600 underline">Cambiar</button>
               </div>
             </div>
 
-            <Button type="submit" disabled={saving}>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Reserva a facturar</label>
+              {loadingReservations ? (
+                <p className="flex items-center gap-2 text-sm text-gray-500"><Spinner /> Cargando reservas...</p>
+              ) : reservations.length === 0 ? (
+                <p className="text-sm text-red-600">Esta empresa no tiene reservas registradas.</p>
+              ) : (
+                <div className="space-y-2">
+                  {reservations.map((r) => (
+                    <button
+                      key={r.id}
+                      onClick={() => setReservationId(r.id)}
+                      className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition ${
+                        reservationId === r.id
+                          ? "border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600"
+                          : "border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      <div className="font-medium text-gray-800">
+                        {formatDate(r.start_date)} → {formatDate(r.end_date)}
+                      </div>
+                      <div className="text-gray-500">
+                        {r.guest_count} huésped{r.guest_count !== 1 ? "es" : ""} · Estado: {r.status}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={handleSubmit}
+              disabled={saving || !reservationId}
+            >
               {saving ? (
-                <span className="flex items-center gap-2">
-                  <Spinner />
-                  Generando...
-                </span>
+                <span className="flex items-center gap-2"><Spinner /> Generando...</span>
               ) : (
                 "Generar factura"
               )}
             </Button>
-          </form>
+          </div>
         )}
       </div>
 
