@@ -22,11 +22,12 @@ export default function GuestSearchCreate({
   });
 
   const filtered = allGuests.filter(
-    (g) =>
-      !selectedGuests.find((s) => s.id === g.id) &&
-      (`${g.first_name} ${g.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
-        g.document_number?.includes(search))
-  );
+  (g) =>
+    !selectedGuests.find((s) => s.id === g.id) &&
+    g.company_id === companyId &&
+    (`${g.first_name} ${g.last_name}`.toLowerCase().includes(search.toLowerCase()) ||
+      g.document_number?.includes(search))
+);
 
   const handleCreate = () => {
     if (!newGuest.first_name || !newGuest.last_name || !newGuest.document_number) {
