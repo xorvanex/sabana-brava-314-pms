@@ -28,10 +28,40 @@ async function patchReservation(reservationId, action) {
   return await res.json();
 }
 
+// ── Constancia local de huéspedes que hicieron check in ──────────────────────
+function loadCheckinRecord() {
+  try {
+    return JSON.parse(localStorage.getItem("checkin_guests") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveCheckinRecord(record) {
+  localStorage.setItem("checkin_guests", JSON.stringify(record));
+}
+
+export function saveGuestCheckins(reservationId, guestIds) {
+  const record = loadCheckinRecord();
+  record[reservationId] = guestIds;
+  saveCheckinRecord(record);
+}
+
+export function getGuestCheckins(reservationId) {
+  return loadCheckinRecord()[reservationId] || [];
+}
+
+export function clearGuestCheckins(reservationId) {
+  const record = loadCheckinRecord();
+  delete record[reservationId];
+  saveCheckinRecord(record);
+}
+
+// ── Hook ─────────────────────────────────────────────────────────────────────
 export function useCheckIn() {
-  const [pendingReservations, setPendingReservations] = useState([]);
   const [confirmedReservations, setConfirmedReservations] = useState([]);
   const [checkedInReservations, setCheckedInReservations] = useState([]);
+  const [pendingReservations, setPendingReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,9 +70,9 @@ export function useCheckIn() {
     setError(null);
     try {
       const all = await getAllReservations();
-      setPendingReservations(all.filter((r) => r.status === "PENDING"));
       setConfirmedReservations(all.filter((r) => r.status === "CONFIRMED"));
       setCheckedInReservations(all.filter((r) => r.status === "CHECKED_IN"));
+      setPendingReservations(all.filter((r) => r.status === "PENDING"));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,7 +84,23 @@ export function useCheckIn() {
     load();
   }, [load]);
 
-  // PENDING → CONFIRMED
+  // CONFIRMED → CHECKED_IN  (guarda qué huéspedes hicieron check in)
+  const handleCheckIn = async (reservationId, selectedGuestIds) => {
+    const updated = await patchReservation(reservationId, "check-in");
+    saveGuestCheckins(reservationId, selectedGuestIds);
+    setConfirmedReservations((prev) => prev.filter((r) => r.id !== reservationId));
+    setCheckedInReservations((prev) => [...prev, updated]);
+    return updated;
+  };
+
+  // CHECKED_IN → COMPLETED  (limpia la constancia local)
+  const handleCheckOut = async (reservationId) => {
+    const updated = await patchReservation(reservationId, "check-out");
+    clearGuestCheckins(reservationId);
+    setCheckedInReservations((prev) => prev.filter((r) => r.id !== reservationId));
+    return updated;
+  };
+  
   const handleConfirm = async (reservationId) => {
     const updated = await patchReservation(reservationId, "confirm");
     setPendingReservations((prev) => prev.filter((r) => r.id !== reservationId));
@@ -62,30 +108,15 @@ export function useCheckIn() {
     return updated;
   };
 
-  // CONFIRMED → CHECKED_IN
-  const handleCheckIn = async (reservationId) => {
-    const updated = await patchReservation(reservationId, "check-in");
-    setConfirmedReservations((prev) => prev.filter((r) => r.id !== reservationId));
-    setCheckedInReservations((prev) => [...prev, updated]);
-    return updated;
-  };
-
-  // CHECKED_IN → COMPLETED
-  const handleCheckOut = async (reservationId) => {
-    const updated = await patchReservation(reservationId, "check-out");
-    setCheckedInReservations((prev) => prev.filter((r) => r.id !== reservationId));
-    return updated;
-  };
-
   return {
-    pendingReservations,
     confirmedReservations,
     checkedInReservations,
+    pendingReservations,   
     loading,
     error,
     reload: load,
-    handleConfirm,
     handleCheckIn,
     handleCheckOut,
+    handleConfirm,  
   };
 }
