@@ -7,6 +7,8 @@ import {
   createReservation,
   getAllCompanies,
   getCompanyContracts,
+  assignGuestsToReservation,
+  createRoomAssignment,
 } from "@/receptionist/services/receptionist.service";
 import GuestSearchCreate from "./GuestSearchCreate";
 import RoomAvailabilityModal from "./RoomAvailabilityModal";
@@ -248,7 +250,7 @@ export default function RegisterReservationView() {
       setLoading(true);
       const allGuests = Object.values(roomAssignments).flat();
       
-      await createReservation({
+      const newReservation = await createReservation({
         company_id: companyId,
         contract_id: contractId,
         start_date: startDate,
@@ -256,6 +258,19 @@ export default function RegisterReservationView() {
         guest_count: allGuests.length,
         room_ids: selectedRooms.map((r) => r.id),
       });
+
+      const guestIds = allGuests.map((g) => g.id);
+      if (guestIds.length > 0) {
+        await assignGuestsToReservation(newReservation.id, guestIds);
+      }
+
+
+      for (const roomId of Object.keys(roomAssignments)) {
+        const guestsInRoom = roomAssignments[roomId] || [];
+        for (const guest of guestsInRoom) {
+          await createRoomAssignment(newReservation.id, roomId, guest.id);
+        }
+      }
       
       setSuccessMsg("Reserva registrada con éxito.");
       setStartDate("");
