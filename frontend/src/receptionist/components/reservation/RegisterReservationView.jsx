@@ -286,7 +286,12 @@ export default function RegisterReservationView() {
       setCompanySearch("");
     } catch (e) {
       console.error(e);
-      setError(e.message);
+      const errorMessage = e.message;
+      if (errorMessage === "Room already has an active reservation with overlapping dates") {
+        setError("La habitación ya tiene una reserva activa con fechas que se superponen.");
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
