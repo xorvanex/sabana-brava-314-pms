@@ -105,13 +105,13 @@ export default function ReceptionistDashboardView() {
           </div>
         </article>
 
-        {/* Reservas Activas */}
+        {/* Reservas totales */}
         <article className="group relative overflow-hidden rounded-2xl border border-sky-100/80 bg-white p-6 shadow-sm hover:shadow-md hover:border-sky-200 transition-all duration-300 transform hover:-translate-y-1">
           <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-sky-50/50 group-hover:scale-110 transition-transform duration-300" />
           <div className="relative flex items-center justify-between">
             <div className="space-y-2">
               <p className="text-xs font-bold tracking-wider text-gray-400 uppercase">
-                Reservas activas
+                Reservas en sistema
               </p>
               <p className="text-4xl font-extrabold text-sky-800 group-hover:text-sky-600 transition-colors">
                 {summary?.activeReservations ?? 0}

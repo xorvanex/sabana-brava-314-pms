@@ -12,7 +12,7 @@ export async function getReceptionistSummary() {
   const [roomsRes, guestsRes, reservationsRes] = await Promise.all([
     fetch(`${API_URL}/rooms/`, { headers }),
     fetch(`${API_URL}/guests/`, { headers }),
-    fetch(`${API_URL}/reservations/active`, { headers })
+    fetch(`${API_URL}/reservations/`, { headers }),
   ]);
 
   // Si alguna de las peticiones falla (ej. error 500, 401, etc.), lanzamos error
@@ -32,7 +32,7 @@ export async function getReceptionistSummary() {
   return {
     availableRooms: availableRoomsCount,
     totalGuests: guests.length, // Conteo de huéspedes reales en base de datos
-    activeReservations: reservations.length // Conteo de reservas activas reales
+    activeReservations: reservations.length // Conteo total de reservas
   };
 }
 export async function getRoomAvailabilityData() {
