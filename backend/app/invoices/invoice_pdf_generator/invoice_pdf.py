@@ -1,17 +1,21 @@
 """
-Specialized module for generating PDFs for invoices.
-It handles all the logic for rendering invoices in PDF format.
+Invoice PDF generation module.
+
+Handles all logic for rendering invoices in PDF format.
 """
 
+# Standard library
 from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
 from uuid import UUID
 
+# Third-party
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
+# ReportLab
 from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
@@ -21,6 +25,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.units import inch
 
+# Local imports
 from .invoice_pdf_styles import (
     InvoicePDFStyles,
     InvoicePDFColors,
@@ -29,7 +34,10 @@ from .invoice_pdf_styles import (
 )
 
 
-# Hotel fixed information
+# ============================================================================
+# Hotel Constants
+# ============================================================================
+
 HOTEL_NAME = "Hotel Sabana Brava 314"
 HOTEL_NIT = "XXXXX"
 HOTEL_ADDRESS = "XXXXX"
@@ -37,10 +45,16 @@ HOTEL_PHONE = "XXXXX"
 HOTEL_EMAIL = "XXXXX"
 
 
+# ============================================================================
+# PDF Generator
+# ============================================================================
+
 class InvoicePDFGenerator:
     """
-    Class responsible for generating PDFs for invoices.
-    It encapsulates all the rendering logic and document structure.
+    Invoice PDF generator.
+    
+    Encapsulates all rendering logic and document structure
+    for generating invoice PDF documents.
     """
 
     def __init__(self, invoice, company):
@@ -64,15 +78,15 @@ class InvoicePDFGenerator:
         filename: str = ""
     ) -> StreamingResponse:
         """
-        Generates the PDF of the invoice and returns a streaming response.
+        Generate the PDF of the invoice.
         
         Returns:
             StreamingResponse: PDF ready for download
         """
-        # Create buffer in memory for the PDF
+        # Create in-memory buffer for the PDF
         pdf_buffer = BytesIO()
 
-        # Configure PDF document with professional margins
+        # Configure PDF document with standard margins
         pdf = SimpleDocTemplate(
             pdf_buffer,
             pagesize=(8.5*inch, 11*inch),
@@ -83,7 +97,7 @@ class InvoicePDFGenerator:
             title=f"Factura_{self.invoice.invoice_number}"
         )
 
-        # Build PDF content
+        # Build the PDF content
         content = []
         content.extend(self._build_header())
         content.extend(self._build_hotel_information())
@@ -109,6 +123,11 @@ class InvoicePDFGenerator:
                 f"{content_disposition}; filename={pdf_filename}"
             }
         )
+
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
 
     def _format_currency(self, amount: Decimal) -> str:
         """
@@ -163,13 +182,19 @@ class InvoicePDFGenerator:
         status = self.invoice.invoice_status or ""
         return status_map.get(status, status) or "No especificado"
 
+
+# ============================================================================
+# Header Builders
+# ============================================================================
+
     def _build_header(self) -> list:
         """
-        Create the invoice header section.
-        Include the hotel name, document type, and general information.
+        Build the invoice header section.
+        
+        Includes hotel name, document type, and general information.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
@@ -190,7 +215,7 @@ class InvoicePDFGenerator:
         )
         content.append(Spacer(1, self.dimensions.SPACE_SMALL*inch))
 
-        # Invoice information table
+        # Invoice metadata table
         header_data = [[
             Paragraph(
                 f"<b>Factura No.</b><br/>{self.invoice.invoice_number}",
@@ -217,21 +242,26 @@ class InvoicePDFGenerator:
 
         return content
 
+
+# ============================================================================
+# Company Information Builders
+# ============================================================================
+
     def _build_hotel_information(self) -> list:
         """
-        Build the section with hotel information.
+        Build the hotel information section.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Title section
+        # Section title
         content.append(
             Paragraph("<b>DATOS DEL HOTEL</b>", self.styles.get_heading_style())
         )
 
-        # Hotel data in table
+        # Hotel data table
         hotel_data = [
             [
                 Paragraph("<b>Nombre:</b>", self.styles.get_label_style()),
@@ -264,19 +294,19 @@ class InvoicePDFGenerator:
 
     def _build_company_information(self) -> list:
         """
-        Build the section with information from the client company.
+        Build the company information section.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Title section
+        # Section title
         content.append(
             Paragraph("<b>DATOS DE LA EMPRESA</b>", self.styles.get_heading_style())
         )
 
-        # Company data in table
+        # Company data table
         company_data = [
             [
                 Paragraph("<b>Empresa:</b>", self.styles.get_label_style()),
@@ -322,16 +352,23 @@ class InvoicePDFGenerator:
 
         return content
 
+
+# ============================================================================
+# Invoice Detail Builders
+# ============================================================================
+
     def _build_invoice_items_table(self) -> list:
         """
-        Build the section with invoice line items.
+        Build the invoice line items section.
+        
+        Renders billing detail rows.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Title section
+        # Section title
         content.append(
             Paragraph("<b>DETALLE DE FACTURACIÓN</b>", self.styles.get_heading_style())
         )
@@ -365,12 +402,19 @@ class InvoicePDFGenerator:
 
         return content
 
+
+# ============================================================================
+# Financial Summary Builders
+# ============================================================================
+
     def _build_financial_summary(self) -> list:
         """
-        Build the section with financial summary.
+        Build the financial summary section.
+        
+        Renders subtotal, tax, discount, and total rows.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
@@ -406,16 +450,23 @@ class InvoicePDFGenerator:
 
         return content
 
+
+# ============================================================================
+# DIAN Information Builders
+# ============================================================================
+
     def _build_electronic_information(self) -> list:
         """
-        Build the section with electronic information.
+        Build the electronic information section.
+        
+        Displays DIAN validation metadata.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
-        # Title section
+        # Section title
         content.append(
             Paragraph("<b>INFORMACIÓN ELECTRÓNICA</b>", self.styles.get_heading_style())
         )
@@ -452,11 +503,12 @@ class InvoicePDFGenerator:
 
     def _build_observations(self) -> list:
         """
-        Build the section with observations.
-        Only displayed if there is content.
+        Build the observations section.
+        
+        Only rendered if content exists.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
@@ -478,13 +530,19 @@ class InvoicePDFGenerator:
 
         return content
 
+
+# ============================================================================
+# Footer Builders
+# ============================================================================
+
     def _build_footer(self) -> list:
         """
-        Create the invoice footer.
-        Include legal and generation information.
+        Build the footer section.
+        
+        Includes legal and generation information.
         
         Returns:
-            list: List of items to add to the PDF
+            list: List of PDF elements
         """
         content = []
 
@@ -515,30 +573,33 @@ class InvoicePDFGenerator:
         return content
 
 
+# ============================================================================
+# Public Helper Functions
+# ============================================================================
+
 def generate_invoice_pdf(
     db: Session,
     invoice_id: UUID,
     invoice_repository,
 ) -> StreamingResponse:
     """
-    Public function to generate a PDF of an invoice.
+    Generate a PDF of an invoice.
     
-    This function serves as an entry point from the invoices service.
-    Verify that the invoice exists and delegate the generation to the 
-    specialized generator.
+    Entry point from the invoices service. Verifies invoice exists
+    and delegates generation to the specialized generator.
     
     Args:
         db: Database session
-        invoice_id: ID of the invoice to be generated
-        invoice_repository: Invoice repository for database consultation
+        invoice_id: ID of the invoice to generate
+        invoice_repository: Invoice repository for database lookup
         
     Returns:
-        StreamingResponse: PDF of the invoice ready for download
+        StreamingResponse: PDF ready for download
         
     Raises:
-        HTTPException: If the invoice does not exist
+        HTTPException: If invoice not found
     """
-    # Validate invoice existence
+    # Validate invoice exists
     invoice = invoice_repository.get_invoice_by_id(db, invoice_id)
 
     if not invoice:
@@ -547,10 +608,10 @@ def generate_invoice_pdf(
             detail="Invoice not found"
         )
 
-    # Get company associated
+    # Get associated company
     company = invoice.company
 
-    # Create generator and get PDF
+    # Create generator and return PDF
     generator = InvoicePDFGenerator(invoice, company)
     return generator.generate()
 
@@ -560,13 +621,12 @@ def generate_invoice_preview_pdf(
     company,
 ) -> StreamingResponse:
     """
-    Generate a preview PDF without consulting or persisting an invoice.
+    Generate an invoice preview PDF.
+    
+    Creates a PDF without persisting to database.
     """
     generator = InvoicePDFGenerator(invoice, company)
     return generator.generate(
         content_disposition="inline",
         filename="invoice_preview.pdf"
     )
-
-
-# End file:
