@@ -119,7 +119,6 @@ export default function AvailabilityView() {
     const rect = e.currentTarget.getBoundingClientRect();
     setTooltip({
       visible: true,
-      // Centrado horizontalmente sobre la celda, justo encima
       x: rect.left + rect.width / 2,
       y: rect.top,
       reserva,
@@ -204,7 +203,7 @@ export default function AvailabilityView() {
         </div>
         {error && (
           <p className="mt-3 text-xs font-semibold text-red-600 flex items-center gap-1">
-            ⚠️ {error}
+            {error}
           </p>
         )}
       </form>

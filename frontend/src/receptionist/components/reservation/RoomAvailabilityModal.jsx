@@ -41,10 +41,13 @@ export default function RoomAvailabilityModal({
           
           if (room.status !== "AVAILABLE" || !room.is_active) return false;
           const conflict = activeRes.some((res) => {
-            const overlaps = !(res.end_date <= startDate || res.start_date >= endDate);
-            if (!overlaps) return false;
-            return res.rooms?.some((r) => r.id === room.id);
-          });
+          const resStart = new Date(res.start_date);
+          const resEnd = new Date(res.end_date);
+          const reqStart = new Date(startDate);
+          const reqEnd = new Date(endDate);
+          const overlaps = !(resEnd <= reqStart || resStart >= reqEnd);
+          return overlaps && res.rooms?.some((r) => r.id === room.id);
+        });
           return !conflict;
         });
         setRooms(freeRooms);
