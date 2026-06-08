@@ -65,7 +65,7 @@ export async function getRoomAvailabilityData() {
 export async function getAllGuests() {
   const res = await fetch(`${API_URL}/guests/`, { headers: authHeaders() });
   if (!res.ok) throw new Error("No se pudieron obtener los huéspedes.");
-  return await res.json();          // → [{ id, first_name, last_name, document_number, ... }]
+  return await res.json();          
 }
 export async function createGuest(guestData) {
   const body = new FormData();
@@ -80,19 +80,19 @@ export async function createGuest(guestData) {
     const errorMessage = err?.detail || err?.message || JSON.stringify(err) || "Error al crear el huésped.";
     throw new Error(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
   }
-  return await res.json();          // → huésped creado
+  return await res.json();         
 }
 
 // Obtiene todas las habitaciones (solo activas)
 export async function getAllRooms() {
   const res = await fetch(`${API_URL}/rooms/`, { headers: authHeaders() });
   if (!res.ok) throw new Error("No se pudieron obtener las habitaciones.");
-  return await res.json();          // → [{ id, room_number, capacity, status, is_active }, …]
+  return await res.json();         
 }
 
 export async function createReservation(reservationData) {
   const body = new FormData();
-  // campos del schema ReservationCreate (ver backend)
+
   body.append("company_id", reservationData.company_id);
   body.append("contract_id", reservationData.contract_id);
   body.append("start_date", reservationData.start_date);
@@ -100,7 +100,7 @@ export async function createReservation(reservationData) {
   body.append("guest_count", reservationData.guest_count);
   body.append("status", reservationData.status ?? "PENDING");
   body.append("notes", reservationData.notes ?? "");
-  // lista de habitaciones (array de UUID)
+  
   reservationData.room_ids?.forEach((id) => body.append("room_ids", id));
   const res = await fetch(`${API_URL}/reservations/`, {
     method: "POST",
@@ -111,10 +111,9 @@ export async function createReservation(reservationData) {
     const err = await res.json().catch(() => null);
     throw new Error(err?.detail ?? "Error al crear la reserva.");
   }
-  return await res.json();          // → reserva creada
+  return await res.json();       
 }
 
-/*  RESERVAS ACTIVAS (para cálculo de disponibilidad)                */
 
 export async function getActiveReservations() {
   const res = await fetch(`${API_URL}/reservations/active`, {
@@ -124,7 +123,7 @@ export async function getActiveReservations() {
   return await res.json();     
 }
 
-/*  EMPRESAS                                                          */
+
 
 export async function getAllCompanies() {
   const res = await fetch(`${API_URL}/companies/`, { headers: authHeaders() });
@@ -137,5 +136,42 @@ export async function getCompanyContracts(companyId) {
     headers: authHeaders() 
   });
   if (!res.ok) throw new Error("No se pudieron obtener los contratos de la empresa.");
+  return await res.json();
+}
+
+export async function getAllReservations() {
+  const res = await fetch(`${API_URL}/reservations/`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("No se pudieron obtener las reservas.");
+  return await res.json();
+}
+
+export async function assignGuestsToReservation(reservationId, guestIds) {
+  const body = new FormData();
+  body.append("guest_ids", guestIds.join(","));
+  const res = await fetch(`${API_URL}/reservations/${reservationId}/guests`, {
+    method: "POST",
+    headers: authHeaders(),
+    body,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail ?? "Error al asignar huéspedes a la reserva.");
+  }
+  return await res.json();
+}
+
+export async function createRoomAssignment(reservationId, roomId, guestId) {
+  const body = new FormData();
+  body.append("room_id", roomId);
+  body.append("guest_id", guestId);
+  const res = await fetch(`${API_URL}/reservations/${reservationId}/room-assignments`, {
+    method: "POST",
+    headers: authHeaders(),
+    body,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.detail ?? "Error al asignar huéspedes a las habitaciones.");
+  }
   return await res.json();
 }
