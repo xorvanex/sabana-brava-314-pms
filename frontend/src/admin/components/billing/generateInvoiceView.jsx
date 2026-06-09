@@ -50,7 +50,6 @@ export default function GenerateInvoiceView() {
     if (error) showError(error);
   }, [error]);
 
-
   const handleSelectEmpresa = (id) => {
     setEmpresaId(id);
     setContractId("");
@@ -60,20 +59,18 @@ export default function GenerateInvoiceView() {
     loadReservations(id);
   };
 
-
   const handleSelectContract = (id) => {
     setContractId(id);
     setReservationId("");
     setStep(3);
   };
 
-
   const handleSubmit = async () => {
     if (!empresaId || !contractId || !reservationId) return;
     setSuccess(null);
     setSaving(true);
 
-    const reservation = reservations.find((r) => r.id === reservationId);
+    const reservation = completedReservations.find((r) => r.id === reservationId);
     const period_start = reservation.start_date;
     const period_end = reservation.end_date;
 
@@ -96,7 +93,9 @@ export default function GenerateInvoiceView() {
 
   const selectedCompany = companies.find((c) => c.id === empresaId);
   const selectedContract = contracts.find((c) => c.id === contractId);
-  const selectedReservation = reservations.find((r) => r.id === reservationId);
+
+  // Solo se muestran reservas con estado COMPLETED para facturar
+  const completedReservations = reservations.filter((r) => r.status === "COMPLETED");
 
   return (
     <section className="space-y-4">
@@ -109,7 +108,6 @@ export default function GenerateInvoiceView() {
 
       <AdminSuccessBanner message={success} onDismiss={() => setSuccess(null)} />
 
-
       <div className="flex items-center gap-4 rounded-xl border border-emerald-100 bg-white px-6 py-4 shadow-sm">
         <StepBadge number={1} label="Empresa" active={step === 1} done={step > 1} />
         <span className="h-px flex-1 bg-gray-200" />
@@ -120,7 +118,7 @@ export default function GenerateInvoiceView() {
 
       <div className="max-w-lg rounded-xl border border-emerald-100 bg-white p-6 shadow-sm space-y-5">
 
-
+        {/* ── STEP 1: seleccionar empresa ── */}
         {step === 1 && (
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Empresa a facturar</label>
@@ -141,9 +139,9 @@ export default function GenerateInvoiceView() {
           </div>
         )}
 
+        {/* ── STEP 2: seleccionar contrato ── */}
         {step === 2 && (
           <div className="space-y-4">
-            {/* resumen empresa */}
             <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-2 text-sm">
               <span className="font-medium text-emerald-800">{selectedCompany?.name}</span>
               <button onClick={() => setStep(1)} className="text-xs text-emerald-600 underline">Cambiar</button>
@@ -181,7 +179,7 @@ export default function GenerateInvoiceView() {
           </div>
         )}
 
-
+        {/* ── STEP 3: seleccionar reserva completada ── */}
         {step === 3 && (
           <div className="space-y-4">
             {/* resumen empresa + contrato */}
@@ -198,13 +196,21 @@ export default function GenerateInvoiceView() {
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Reserva a facturar</label>
+
               {loadingReservations ? (
-                <p className="flex items-center gap-2 text-sm text-gray-500"><Spinner /> Cargando reservas...</p>
-              ) : reservations.length === 0 ? (
-                <p className="text-sm text-red-600">Esta empresa no tiene reservas registradas.</p>
+                <p className="flex items-center gap-2 text-sm text-gray-500">
+                  <Spinner /> Cargando reservas...
+                </p>
+              ) : completedReservations.length === 0 ? (
+                // Mensaje diferenciado: si hay reservas pero ninguna completada vs. no hay ninguna
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  {reservations.length === 0
+                    ? "Esta empresa no tiene reservas registradas."
+                    : "Esta empresa no tiene reservas completadas disponibles para facturar. Solo se pueden facturar reservas con estado Completada."}
+                </div>
               ) : (
                 <div className="space-y-2">
-                  {reservations.map((r) => (
+                  {completedReservations.map((r) => (
                     <button
                       key={r.id}
                       onClick={() => setReservationId(r.id)}
@@ -218,7 +224,8 @@ export default function GenerateInvoiceView() {
                         {formatDate(r.start_date)} → {formatDate(r.end_date)}
                       </div>
                       <div className="text-gray-500">
-                        {r.guest_count} huésped{r.guest_count !== 1 ? "es" : ""} · Estado: {r.status}
+                        {r.guest_count} huésped{r.guest_count !== 1 ? "es" : ""} · Estado:{" "}
+                        <span className="font-medium text-emerald-700">Completada</span>
                       </div>
                     </button>
                   ))}

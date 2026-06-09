@@ -43,3 +43,34 @@ export async function getAllCompanies() {
   });
   return parseResponse(response, "Error al obtener empresas");
 }
+
+/**
+ * Descarga el PDF de una factura por su ID.
+ * Hace fetch al endpoint GET /invoices/{invoice_id}/pdf,
+ * convierte la respuesta a Blob y dispara la descarga en el navegador.
+ */
+export async function downloadInvoicePdf(invoiceId, invoiceNumber) {
+  const response = await fetch(`${API_URL}/invoices/${invoiceId}/pdf`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    const message =
+      typeof data?.detail === "string"
+        ? data.detail
+        : "Error al descargar la factura";
+    throw new Error(message);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${invoiceNumber ?? invoiceId}.pdf`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
