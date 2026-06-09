@@ -1,0 +1,60 @@
+# =============================================================================
+# docker-compose.yml - Orquestación del Backend y Frontend
+# =============================================================================
+
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    
+    container_name: sb314-backend
+    
+    ports:
+      - "8000:8000"
+    
+    env_file:
+      - ../SB314.env
+      
+    # ¡ESTO ES CLAVE PARA DESARROLLO!
+    # Sincroniza tu código local con el contenedor en tiempo real
+    volumes:
+      - ../backend:/app/backend
+    
+    restart: unless-stopped
+    
+    healthcheck:
+      # Apuntamos a /docs para asegurar que FastAPI levantó correctamente
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    
+    container_name: sb314-frontend
+    
+    ports:
+      - "3000:3000"
+    
+    # ¡ESTO ES CLAVE PARA DESARROLLO!
+    # Sincroniza tu código local con el contenedor en tiempo real
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    
+    restart: unless-stopped
+    
+    depends_on:
+      - backend
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
