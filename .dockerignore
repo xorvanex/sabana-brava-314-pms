@@ -1,0 +1,46 @@
+# =============================================================================
+# .dockerignore - Archivos que Docker debe IGNORAR al construir la imagen
+# =============================================================================
+
+# Entornos virtuales de Python
+.venv/
+venv/
+env/
+ENV/
+
+# Archivos compilados de Python
+__pycache__/
+*.py[codz]
+*$py.class
+*.pyc
+
+# Git
+.git/
+.gitignore
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker (evitar recursión)
+docker/
+Dockerfile
+docker-compose.yml
+
+# Documentación
+docs/
+README.md
+LICENSE
+
+# Archivos temporales y cachés
+*.log
+*.tmp
+tempCodeRunnerFile.py
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Seguridad: NUNCA copiar el archivo de variables de entorno a la imagen
+SB314.env

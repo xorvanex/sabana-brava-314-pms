@@ -1,0 +1,34 @@
+# =============================================================================
+# Dockerfile - Backend Hotel Sabana Brava 314
+# =============================================================================
+FROM python:3.11.9-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Instalar dependencias del sistema para compilar psycopg2
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libpq-dev \
+        gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Establecer directorio de trabajo en la raíz
+WORKDIR /app
+
+# Copiar requirements primero para aprovechar la caché de Docker
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copiar el código fuente del backend
+COPY backend/ ./backend/
+
+# Nos movemos a la carpeta backend para simular tu "cd backend"
+WORKDIR /app/backend
+
+EXPOSE 8000
+
+# Comando para iniciar el servidor con hot-reload activado
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
