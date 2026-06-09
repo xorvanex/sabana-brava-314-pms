@@ -6,7 +6,9 @@ const MESSAGE_MAP = {
   "Company not found": "La empresa no fue encontrada.",
   "Invoice not found": "La factura no fue encontrada.",
   "No active contract found for company":
-    "No hay un contrato vigente asociado a la empresa para el periodo seleccionado.",
+  "No hay un contrato vigente asociado a la empresa para el periodo seleccionado.",
+  "Invoice already exists for company in period":
+  "Ya existe una factura generada para esta empresa en el periodo seleccionado.",
   "No billable reservations found for selected period":
     "No se puede generar la factura: debe existir al menos una reserva registrada en el periodo y un contrato vigente.",
   "Only pending invoices can be cancelled":
@@ -34,7 +36,18 @@ const FIELD_LABELS = {
 
 function translateDetail(detail) {
   if (!detail) return null;
-  if (typeof detail === "string") return MESSAGE_MAP[detail] ?? detail;
+  if (typeof detail === "string") {
+    // Coincidencia exacta primero
+    if (MESSAGE_MAP[detail]) return MESSAGE_MAP[detail];
+
+    // Coincidencia parcial para mensajes con datos dinámicos
+    const partialKey = Object.keys(MESSAGE_MAP).find((key) =>
+      detail.startsWith(key)
+    );
+    if (partialKey) return MESSAGE_MAP[partialKey];
+
+    return detail;
+  }
   if (Array.isArray(detail)) {
     return detail
       .map((item) => {
