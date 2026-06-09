@@ -14,6 +14,11 @@ __pycache__/
 *$py.class
 *.pyc
 
+# Node modules (será instalado en container)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
 # Git
 .git/
 .gitignore
@@ -25,8 +30,6 @@ __pycache__/
 *.swo
 
 # Docker (evitar recursión)
-docker/
-Dockerfile
 docker-compose.yml
 
 # Documentación
@@ -41,6 +44,7 @@ tempCodeRunnerFile.py
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+.next/
 
 # Seguridad: NUNCA copiar el archivo de variables de entorno a la imagen
 SB314.env

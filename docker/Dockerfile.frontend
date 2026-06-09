@@ -1,0 +1,23 @@
+# =============================================================================
+# Dockerfile - Frontend Hotel Sabana Brava 314 (Next.js)
+# =============================================================================
+FROM node:20-slim
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Establecer directorio de trabajo en la raíz
+WORKDIR /app
+
+# Copiar package files para instalar dependencias
+COPY frontend/package.json frontend/package-lock.json ./
+
+# Instalar dependencias
+RUN npm ci
+
+# Copiar código fuente del frontend
+COPY frontend/ .
+
+EXPOSE 3000
+
+# Comando para iniciar el servidor de desarrollo con hot-reload
+CMD ["npm", "run", "dev"]
