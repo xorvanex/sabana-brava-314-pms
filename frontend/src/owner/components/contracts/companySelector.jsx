@@ -75,7 +75,7 @@ export default function CompanySelector({ onSelect }) {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-semibold text-emerald-900">
+        <h2 className="text-xl font-semibold text-emerald-900">
           Hacer click en la empresa con la cual se quiera crear un contrato
         </h2>
       </div>

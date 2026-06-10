@@ -30,7 +30,7 @@ export default function ContractsView() {
     <section className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-emerald-900">
+          <h1 className="text-4xl font-semibold text-emerald-900">
             Gestión de contratos
           </h1>
         </div>
