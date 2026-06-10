@@ -176,6 +176,18 @@ export default function GlobalDashboard() {
               }
             />
             <MetricCard
+              label="Usuarios activos"
+              value={summary.usuariosActivos}
+              borderClass="border-emerald-100/80 hover:border-emerald-200"
+              iconBg="bg-emerald-50 group-hover:bg-emerald-600"
+              iconColor="text-emerald-600 group-hover:text-white"
+              icon={
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              }
+            />
+            <MetricCard
               label="Facturas registradas"
               value={summary.facturasRegistradas}
               borderClass="border-sky-100/80 hover:border-sky-200"
@@ -184,7 +196,7 @@ export default function GlobalDashboard() {
               icon={docIcon}
             />
             <MetricCard
-              label="Pendientes de pago"
+              label="Facturas pendientes de pago"
               value={summary.facturasPendientesPago}
               borderClass="border-amber-100/80 hover:border-amber-200"
               iconBg="bg-amber-50 group-hover:bg-amber-600"

@@ -149,8 +149,22 @@ if (rol === "OWNER" || rol === "DUEÑA") {
   }
 }
 
+  // Obtener total de facturas
+let totalFacturas = 0;
+const invoicesResponse = await fetch(`${API_URL}/invoices`, {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
+
+if (invoicesResponse.ok) {
+  const invoicesData = await invoicesResponse.json().catch(() => []);
+  totalFacturas = invoicesData?.length || 0;
+}
+
   return {
-    totalFacturas: 0,
+    totalFacturas: totalFacturas,
     contratosActivos: contratosActivos,
     usuariosActivos: data?.length || 0,
   };

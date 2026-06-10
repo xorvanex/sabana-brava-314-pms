@@ -2,6 +2,7 @@ import { API_URL } from "@/shared/API/api";
 import { parseApiError } from "@/admin/utils/parseApiError";
 import { getMonthPeriod } from "@/admin/utils/period";
 import { getAllInvoices } from "@/shared/serviceGlobal/billing.services";
+import { getAllUsers } from "@/shared/serviceGlobal/user.services";
 
 function authHeaders(json = false) {
   const token = localStorage.getItem("access_token");
@@ -173,11 +174,22 @@ export async function getAdminSummary() {
       getAllCompanies(),
       getAllInvoices(),
     ]);
+
+    let usuariosActivos = 0;
+    try {
+      const users = await getAllUsers();
+      usuariosActivos = users.filter((u) => u.is_active).length;
+    } catch (error) {
+      console.error("Error al obtener usuarios:", error);
+      usuariosActivos = 0;
+    }
+
     const disponibles = rooms.filter((r) => r.status === "AVAILABLE").length;
     const empresasActivas = companies.filter((c) => c.is_active).length;
     const facturasPendientes = invoices.filter(
       (i) => i.invoice_status === "PENDING"
     ).length;
+
     return {
       totalHabitaciones: rooms.length,
       habitacionesDisponibles: disponibles,
@@ -185,6 +197,7 @@ export async function getAdminSummary() {
       empresasActivas,
       facturasRegistradas: invoices.length,
       facturasPendientesPago: facturasPendientes,
+      usuariosActivos,
     };
   } catch {
     return {
@@ -194,6 +207,7 @@ export async function getAdminSummary() {
       empresasActivas: 0,
       facturasRegistradas: 0,
       facturasPendientesPago: 0,
+      usuariosActivos: 0,
     };
   }
 }
