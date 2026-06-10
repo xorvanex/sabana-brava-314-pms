@@ -39,10 +39,10 @@ from .invoice_pdf_styles import (
 # ============================================================================
 
 HOTEL_NAME = "Hotel Sabana Brava 314"
-HOTEL_NIT = "XXXXX"
-HOTEL_ADDRESS = "XXXXX"
-HOTEL_PHONE = "XXXXX"
-HOTEL_EMAIL = "XXXXX"
+HOTEL_NIT = "901831149"
+HOTEL_ADDRESS = "Vereda Buenos Aires"
+HOTEL_PHONE = "3126547890"
+HOTEL_EMAIL = "facturas@sabanabrava.com"
 
 
 # ============================================================================
